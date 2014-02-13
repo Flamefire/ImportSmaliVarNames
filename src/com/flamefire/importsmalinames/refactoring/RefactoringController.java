@@ -14,12 +14,12 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package com.flamefire.renamevariables.refactoring;
+package com.flamefire.importsmalinames.refactoring;
 
 import com.flamefire.fileutils.FileUtil;
 import com.flamefire.fileutils.SuffixFilter;
 import com.flamefire.fileutils.TypeFilter;
-import com.flamefire.renamevariables.handlers.ClassGatherer;
+import com.flamefire.importsmalinames.handlers.ClassGatherer;
 import com.flamefire.smali.parser.SmaliParser;
 import com.flamefire.smali.types.SmaliClass;
 import com.flamefire.smali.types.SmaliMethod;

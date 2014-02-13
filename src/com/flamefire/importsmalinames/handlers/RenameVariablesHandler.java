@@ -15,9 +15,9 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package com.flamefire.renamevariables.handlers;
+package com.flamefire.importsmalinames.handlers;
 
-import com.flamefire.renamevariables.refactoring.RefactoringController;
+import com.flamefire.importsmalinames.refactoring.RefactoringController;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -74,7 +74,7 @@ public class RenameVariablesHandler extends AbstractHandler {
         }
         String lastFolder = null;
         try {
-            lastFolder = com.flamefire.renamevariables.utils.Util.getPersistentProperty(cu.getCorrespondingResource(),
+            lastFolder = com.flamefire.importsmalinames.utils.Util.getPersistentProperty(cu.getCorrespondingResource(),
                     LASTFOLDER);
         } catch (JavaModelException e) {
         }
@@ -86,7 +86,7 @@ public class RenameVariablesHandler extends AbstractHandler {
         if (j.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
             return;
         try {
-            com.flamefire.renamevariables.utils.Util.setPersistentProperty(cu.getCorrespondingResource(), LASTFOLDER, j
+            com.flamefire.importsmalinames.utils.Util.setPersistentProperty(cu.getCorrespondingResource(), LASTFOLDER, j
                     .getSelectedFile().getAbsolutePath());
         } catch (JavaModelException e) {
         }

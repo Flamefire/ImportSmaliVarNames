@@ -14,7 +14,7 @@
             id="RenameVariables.commands.sampleCommand">
       </command>
       <command
-            defaultHandler="com.flamefire.renamevariables.handlers.RenameVariablesHandler"
+            defaultHandler="com.flamefire.importsmalinames.handlers.RenameVariablesHandler"
             id="RenameVariables.renameParams"
             name="RenameParams">
       </command>
@@ -23,7 +23,7 @@
          point="org.eclipse.ui.handlers">
       <handler
             commandId="RenameVariables.commands.sampleCommand"
-            class="com.flamefire.renamevariables.handlers.SampleHandler">
+            class="com.flamefire.importsmalinames.handlers.SampleHandler">
       </handler>
    </extension>
    <extension
