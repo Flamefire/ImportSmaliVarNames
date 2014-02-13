@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="Sample Category"
+            id="RenameVariables.commands.category">
+      </category>
+      <command
+            name="Sample Command"
+            categoryId="RenameVariables.commands.category"
+            id="RenameVariables.commands.sampleCommand">
+      </command>
+      <command
+            defaultHandler="com.flamefire.renamevariables.handlers.RenameVariablesHandler"
+            id="RenameVariables.renameParams"
+            name="RenameParams">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="RenameVariables.commands.sampleCommand"
+            class="com.flamefire.renamevariables.handlers.SampleHandler">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="RenameVariables.commands.sampleCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            sequence="M1+6"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               label="Sample Menu"
+               id="RenameVariables.menus.sampleMenu">
+            <command
+                  commandId="RenameVariables.commands.sampleCommand"
+                  id="RenameVariables.menus.sampleCommand">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="RenameVariables.toolbars.sampleToolbar">
+            <command
+                  commandId="RenameVariables.commands.sampleCommand"
+                  icon="icons/sample.gif"
+                  tooltip="Say hello world"
+                  id="RenameVariables.toolbars.sampleCommand">
+            </command>
+         </toolbar>
+      </menuContribution>
+      <menuContribution
+            allPopups="true"
+            locationURI="popup:org.eclipse.ui.popup.any">
+         <command
+               commandId="RenameVariables.renameParams"
+               label="Rename parameters"
+               style="push">
+            <visibleWhen
+                  checkEnabled="true">
+                <or>
+                    <with variable="activePartId">
+                      <equals value="org.eclipse.jdt.ui.CompilationUnitEditor" />
+                    </with>
+                    <with variable="activeMenuSelection">
+                      <iterate ifEmpty="false" operator="and">
+                        <or>
+                          <adapt type="org.eclipse.jdt.core.IType" />
+                          <adapt type="org.eclipse.jdt.core.ICompilationUnit" />
+                        </or>
+                      </iterate>
+                    </with>
+                  </or>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+</plugin>
