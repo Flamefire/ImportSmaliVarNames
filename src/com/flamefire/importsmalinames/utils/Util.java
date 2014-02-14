@@ -88,7 +88,7 @@ public abstract class Util {
     }
 
     public static String removeSuffix(String str, String suffix) {
-        if (str.endsWith("[]"))
+        if (str.endsWith(suffix))
             return str.substring(0, str.length() - suffix.length());
         return str;
     }
