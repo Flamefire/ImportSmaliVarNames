@@ -88,7 +88,7 @@ public class SmaliParser {
             }
             // Fix long params
             for (SmaliMethod m : curClass.methods) {
-                m.cleanUpVars();
+                m.cleanUpParameters();
                 // Enum constructors contain parameters for the enum itself,
                 // they are NOT shown in the code
                 if (isEnum && m.isConstructor()) {
@@ -187,7 +187,7 @@ public class SmaliParser {
             // Handle static methods
             if (methodName.startsWith("static")) {
                 isStaticMethod = true;
-                methodName = methodName.substring(7);
+                methodName = removePrefix(methodName, "static");
             } else
                 isStaticMethod = false;
             methodName = removePrefix(methodName, "bridge");
@@ -196,7 +196,11 @@ public class SmaliParser {
                 return;
             // Handle other modifiers
             methodName = removePrefix(methodName, "final");
-            methodName = removePrefix(methodName, "varargs");
+            boolean isVarArgs = false;
+            if (methodName.startsWith("varargs")) {
+                isVarArgs = true;
+                methodName = removePrefix(methodName, "varargs");
+            }
             methodName = removePrefix(methodName, "abstract");
             methodName = removePrefix(methodName, "constructor");
             methodName = removePrefix(methodName, "declared-synchronized");
@@ -204,7 +208,7 @@ public class SmaliParser {
                 System.err.println("Invalid method name '" + methodName + "' in line " + line);
                 return;
             }
-            curMethod = new SmaliMethod(methodName);
+            curMethod = new SmaliMethod(methodName, isVarArgs);
             curClass.methods.add(curMethod);
         } else if (id.equals(".end")) {
             if (rest.equals("method"))

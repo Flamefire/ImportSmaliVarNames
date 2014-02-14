@@ -101,8 +101,11 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         return res;
     }
 
-    private String getTypeFromVarDecl(SingleVariableDeclaration v) {
-        return v.getType().toString() + getArrayDim(v.getExtraDimensions());
+    private String getTypeFromParam(SingleVariableDeclaration v) {
+        String type = v.getType().toString() + getArrayDim(v.getExtraDimensions());
+        if (v.isVarargs())
+            type += "...";
+        return type;
     }
 
     @Override
@@ -118,7 +121,7 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         @SuppressWarnings("unchecked")
         List<SingleVariableDeclaration> params = node.parameters();
         for (SingleVariableDeclaration p : params) {
-            curMethod.parameters.add(new JavaVariable(p.getName().toString(), getTypeFromVarDecl(p)));
+            curMethod.parameters.add(new JavaVariable(p.getName().toString(), getTypeFromParam(p)));
         }
         curClass.methods.add(curMethod);
         curAnonCt = 0;

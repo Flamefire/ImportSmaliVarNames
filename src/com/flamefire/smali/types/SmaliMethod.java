@@ -22,9 +22,11 @@ import com.flamefire.types.CMethod;
 import java.util.List;
 
 public class SmaliMethod extends CMethod<SmaliVariable> {
+    public final boolean isVarArgs;
 
-    public SmaliMethod(String name) {
+    public SmaliMethod(String name, boolean isVarArgs) {
         super(name);
+        this.isVarArgs = isVarArgs;
     }
 
     private void cleanUpLongVars(List<SmaliVariable> vars) {
@@ -36,8 +38,22 @@ public class SmaliMethod extends CMethod<SmaliVariable> {
         }
     }
 
-    public void cleanUpVars() {
+    public void cleanUpParameters() {
         cleanUpLongVars(parameters);
+        if (isVarArgs) {
+            if (parameters.size() > 0) {
+                SmaliVariable p = parameters.get(getNumberOfParameters() - 1);
+                String type = p.getTypeSignature();
+                if (!type.endsWith("[]"))
+                    System.err.println("VarArgs method " + name + " last parameter has invalid type " + type);
+                else
+                    parameters.set(getNumberOfParameters() - 1,
+                            new SmaliVariable(p.name, "." + type.substring(0, type.length() - 2)));
+            } else {
+                // System.err.println("VarArgs method " + name +
+                // " has no parameters");
+            }
+        }
     }
 
     public void removeLeadingNullParams() {
