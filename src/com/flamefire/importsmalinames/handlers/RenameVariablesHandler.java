@@ -22,8 +22,18 @@ import com.flamefire.importsmalinames.refactoring.RefactoringController;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -66,6 +76,34 @@ public class RenameVariablesHandler extends AbstractHandler {
         return null;
     }
 
+    public IJavaProject getProject(ICompilationUnit cu) {
+        try {
+            // Get the root of the workspace
+            IWorkspace workspace = ResourcesPlugin.getWorkspace();
+            IWorkspaceRoot root = workspace.getRoot();
+            // Get all projects in the workspace
+            IProject[] projects = root.getProjects();
+            // Loop over all projects
+            for (IProject project : projects) {
+                if (!project.isNatureEnabled("org.eclipse.jdt.core.javanature"))
+                    continue;
+                IJavaProject javaProject = JavaCore.create(project);
+                IPackageFragment[] packages = javaProject.getPackageFragments();
+                for (IPackageFragment mypackage : packages) {
+                    if (mypackage.getKind() != IPackageFragmentRoot.K_SOURCE)
+                        continue;
+                    for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
+                        if (cu.equals(unit))
+                            return javaProject;
+                    }
+                }
+            }
+        } catch (CoreException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private void doRename(Shell shell, ICompilationUnit cu) {
         try {
             System.out.println("Class: " + cu.getCorrespondingResource().getName());
@@ -73,9 +111,14 @@ public class RenameVariablesHandler extends AbstractHandler {
             e.printStackTrace();
         }
         String lastFolder = null;
+        IJavaProject proj = getProject(cu);
+        IResource res = null;
         try {
-            lastFolder = com.flamefire.importsmalinames.utils.Util.getPersistentProperty(cu.getCorrespondingResource(),
-                    LASTFOLDER);
+            if (proj != null)
+                res = proj.getCorrespondingResource();
+            else
+                res = cu.getCorrespondingResource();
+            lastFolder = com.flamefire.importsmalinames.utils.Util.getPersistentProperty(res, LASTFOLDER);
         } catch (JavaModelException e) {
         }
         JFileChooser j = new JFileChooser();
@@ -85,15 +128,11 @@ public class RenameVariablesHandler extends AbstractHandler {
             j.setSelectedFile(new File(lastFolder));
         if (j.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
             return;
-        try {
-            com.flamefire.importsmalinames.utils.Util.setPersistentProperty(cu.getCorrespondingResource(), LASTFOLDER, j
-                    .getSelectedFile().getAbsolutePath());
-        } catch (JavaModelException e) {
-        }
+        com.flamefire.importsmalinames.utils.Util.setPersistentProperty(res, LASTFOLDER, j.getSelectedFile()
+                .getAbsolutePath());
         File smaliFolder = j.getSelectedFile();
-
         RefactoringController controller = new RefactoringController(smaliFolder);
-        controller.renameParametersInFile(cu);
+        controller.renameVariablesInFile(cu);
     }
 
 }
