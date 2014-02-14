@@ -14,12 +14,17 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+
 package com.flamefire.importsmalinames.refactoring;
+
+import com.flamefire.importsmalinames.utils.Util;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
 import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
@@ -28,6 +33,8 @@ import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringContribution;
 import org.eclipse.ltk.core.refactoring.RefactoringCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+
+import java.util.List;
 
 public class RefactoringHelper {
     private static IProgressMonitor NULL_MON = new NullProgressMonitor();
@@ -62,24 +69,43 @@ public class RefactoringHelper {
 
     }
 
-    public static String convertType(String type) {
-        if (type.startsWith("Q"))
-            type = type.substring(1);
-        // if (type.startsWith("[B"))
-        // type = type.substring(1);
+    // Makes a java type standard (No "Q...;")
+    public static String standardizeJavaType(String type) {
         int p = type.indexOf('<');
         if (p >= 0)
             type = type.substring(0, p);
         if (type.endsWith(";"))
             type = type.substring(0, type.length() - 1);
+        if (type.startsWith("["))
+            type = type.substring(1) + "[]";
+        if (type.startsWith("Q"))
+            type = type.substring(1);
         return type;
     }
 
+    public static String convertSignatureToType(String type) {
+        if (type.startsWith("I"))
+            return "int" + type.substring(1);
+        if (type.startsWith("J"))
+            return "long" + type.substring(1);
+        if (type.startsWith("B"))
+            return "boolean" + type.substring(1);
+        return standardizeJavaType(type);
+    }
+
     public static boolean typeIsEqual(String javaType, String smaliType) {
+        javaType = RefactoringHelper.standardizeJavaType(javaType);
         if (javaType.equals(smaliType))
             return true;
         if (smaliType.endsWith("." + javaType))
             return true;
         return false;
+    }
+
+    public static List<LocalVar> getLocalVariables(IMethod method) {
+        CompilationUnit cu = Util.createCU(method.getCompilationUnit());
+        LocalVarGatherer lv = new LocalVarGatherer(method);
+        cu.accept(lv);
+        return lv.vars;
     }
 }

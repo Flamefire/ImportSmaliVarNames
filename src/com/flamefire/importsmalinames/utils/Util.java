@@ -14,6 +14,7 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+
 package com.flamefire.importsmalinames.utils;
 
 import org.eclipse.core.resources.IResource;
@@ -73,5 +74,22 @@ public abstract class Util {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // removes the prefix from the string
+    public static String removePrefix(String str, String prefix, int add) {
+        if (str.startsWith(prefix))
+            return str.substring(prefix.length() + add);
+        return str;
+    }
+
+    public static String removePrefix(String str, String prefix) {
+        return removePrefix(str, prefix, 0);
+    }
+
+    public static String removeSuffix(String str, String suffix) {
+        if (str.endsWith("[]"))
+            return str.substring(0, str.length() - suffix.length());
+        return str;
     }
 }

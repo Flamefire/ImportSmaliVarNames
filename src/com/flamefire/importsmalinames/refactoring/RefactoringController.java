@@ -14,6 +14,7 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+
 package com.flamefire.importsmalinames.refactoring;
 
 import com.flamefire.fileutils.FileUtil;
@@ -23,6 +24,7 @@ import com.flamefire.importsmalinames.handlers.ClassGatherer;
 import com.flamefire.smali.parser.SmaliParser;
 import com.flamefire.smali.types.SmaliClass;
 import com.flamefire.smali.types.SmaliMethod;
+import com.flamefire.smali.types.SmaliVariable;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.ILocalVariable;
@@ -47,43 +49,44 @@ public class RefactoringController {
         smaliClasses = parser.getResult();
     }
 
-    public void renameParametersInFile(ICompilationUnit cu) {
+    public void renameVariablesInFile(ICompilationUnit cu) {
         ClassGatherer gatherer = new ClassGatherer();
         Map<String, IType> classes = gatherer.getClasses(cu);
         for (String sClass : classes.keySet()) {
-            renameParametersInClass(sClass, classes.get(sClass));
+            renameVariablesInClass(sClass, classes.get(sClass));
         }
     }
 
-    private void renameParametersInClass(String sClass, IType curClass) {
+    private void renameVariablesInClass(String sClass, IType curClass) {
         System.out.println("Processing class " + sClass);
         SmaliClass smClass = smaliClasses.get(sClass);
-        if (smClass == null) {
-            System.out.println("Error: Smali class not found");
-            return;
-        }
         try {
+            if (smClass == null) {
+                System.out.println("Error: Smali class not found");
+                return;
+            }
             IMethod[] methods = curClass.getMethods();
             for (IMethod method : methods) {
-                renameParameters(method, smClass);
+                renameVariablesInMethod(method, smClass);
             }
         } catch (JavaModelException e) {
             e.printStackTrace();
         }
     }
 
-    private void renameParameters(IMethod method, SmaliClass smClass) throws JavaModelException {
+    private void renameVariablesInMethod(IMethod method, SmaliClass smClass) throws JavaModelException {
         String mName = (method.isConstructor()) ? "<init>" : method.getElementName();
         System.out.println("Processing method " + mName);
+
         List<SmaliMethod> methods = smClass.getMethods(mName, method.getNumberOfParameters());
         for (int i = 0; i < methods.size(); i++) {
             boolean match = true;
             SmaliMethod smaliMethod = methods.get(i);
             ILocalVariable[] p = method.getParameters();
             for (int j = 0; j < p.length; j++) {
-                String type = p[j].getTypeSignature();
-                type = RefactoringHelper.convertType(type);
-                if (!RefactoringHelper.typeIsEqual(type, smaliMethod.parameters.get(j).type)) {
+                String pType = p[j].getTypeSignature();// RefactoringHelper.convertSignatureToType(p[j].getTypeSignature());
+                String p2Type = smaliMethod.parameters.get(j).type;// RefactoringHelper.convertSignatureToType(smaliMethod.parameters.get(j).type);
+                if (!RefactoringHelper.typeIsEqual(pType, p2Type)) {
                     match = false;
                     break;
                 }
@@ -101,7 +104,26 @@ public class RefactoringController {
             System.out.println("Error: To many smali methods match");
             return;
         }
+        renameLocalVariables(method, methods.get(0));
+    }
 
+    private String matchLocalVar(LocalVar locVar, SmaliMethod smMethod) {
+        String res = null;
+        for (SmaliVariable v : smMethod.variables) {
+            if (RefactoringHelper.typeIsEqual(locVar.type, RefactoringHelper.convertSignatureToType(v.type))) {
+                if (res != null)
+                    return null;
+                res = v.name;
+            }
+        }
+        return res;
+    }
+
+    private void renameLocalVariables(IMethod method, SmaliMethod smMethod) {
+        List<LocalVar> locVars = RefactoringHelper.getLocalVariables(method);
+        for (LocalVar v : locVars) {
+            System.out.println(v.name + "->" + matchLocalVar(v, smMethod));
+        }
     }
 
 }

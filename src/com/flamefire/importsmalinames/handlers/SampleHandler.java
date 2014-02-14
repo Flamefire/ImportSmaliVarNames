@@ -14,6 +14,7 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+
 package com.flamefire.importsmalinames.handlers;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -80,7 +81,6 @@ public class SampleHandler extends AbstractHandler {
             if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
                 System.out.println("Package " + mypackage.getElementName());
                 printICompilationUnitInfo(mypackage);
-
             }
 
         }
@@ -89,7 +89,6 @@ public class SampleHandler extends AbstractHandler {
     private void printICompilationUnitInfo(IPackageFragment mypackage) throws JavaModelException {
         for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
             printCompilationUnitDetails(unit);
-
         }
     }
 

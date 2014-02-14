@@ -14,8 +14,10 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+
 package com.flamefire.smali.parser;
 
+import com.flamefire.importsmalinames.utils.Util;
 import com.flamefire.smali.types.SmaliClass;
 import com.flamefire.smali.types.SmaliMethod;
 import com.flamefire.smali.types.SmaliVariable;
@@ -34,11 +36,13 @@ public class SmaliParser {
     private SmaliMethod curMethod;
     private boolean waitForEnclosingMethod;
     private boolean isStaticMethod;
+    private boolean isInnerClass;
 
     public Map<String, SmaliClass> getResult() {
         Map<String, SmaliClass> result = new HashMap<String, SmaliClass>();
         for (SmaliClass c : classes.values()) {
-            System.out.println(c.finalName);
+            c.finalName = c.finalName.replace('$', '.');
+            result.put(c.finalName, c);
         }
         return result;
     }
@@ -47,6 +51,7 @@ public class SmaliParser {
         curClass = null;
         curMethod = null;
         waitForEnclosingMethod = false;
+        isInnerClass = false;
         BufferedReader br;
         try {
             br = new BufferedReader(new FileReader(file));
@@ -75,6 +80,13 @@ public class SmaliParser {
             for (SmaliMethod m : curClass.methods) {
                 m.cleanUpVars();
             }
+            // Inner classes may have parent as first param
+            if (isInnerClass) {
+                for (SmaliMethod m : curClass.methods) {
+                    if (m.name.equals("<init>") && m.parameters.size() > 0 && m.parameters.get(0) == null)
+                        m.parameters.remove(0);
+                }
+            }
             // Update real containing class name for classes in this class
             for (SmaliClass c : classes.values()) {
                 if (c.finalName.startsWith(curClass.name + "->")) {
@@ -85,24 +97,24 @@ public class SmaliParser {
         return true;
     }
 
-    private String smaliTypeToJavaType(String type) {
-        if (type.startsWith("L"))
-            type = type.substring(1);
-        if (type.startsWith("[B"))
-            type = type.substring(1);
+    private static String smaliTypeToJavaType(String type) {
         if (type.endsWith(";"))
             type = type.substring(0, type.length() - 1);
-        return type.replace('/', '.');
+        if (type.startsWith("["))
+            type = type.substring(1) + "[]";
+        if (type.startsWith("L"))
+            type = type.substring(1);
+        type = type.replace('/', '.');
+        type = Util.removePrefix(type, "java.lang.");
+        return type;
     }
 
     // Removes a prefix (a word including an implied following space)
-    private String removePrefix(String str, String prefix) {
-        if (str.startsWith(prefix))
-            return str.substring(prefix.length() + 1);
-        return str;
+    private static String removePrefix(String str, String prefix) {
+        return Util.removePrefix(str, prefix, 1);
     }
 
-    private boolean isNameValid(String name) {
+    private static boolean isNameValid(String name) {
         return !name.contains(" ");
     }
 
@@ -120,6 +132,7 @@ public class SmaliParser {
             className = removePrefix(className, "interface");
             className = removePrefix(className, "abstract");
             className = removePrefix(className, "final");
+            className = removePrefix(className, "annotation");
             className = removePrefix(className, "enum");
             className = smaliTypeToJavaType(className);
             if (!isNameValid(className)) {
@@ -133,9 +146,10 @@ public class SmaliParser {
         if (curClass == null)
             return;
         if (id.equals(".annotation")) {
-            if (!rest.equals("system Ldalvik/annotation/EnclosingMethod;"))
-                return;
-            waitForEnclosingMethod = true;
+            if (rest.equals("system Ldalvik/annotation/InnerClass;"))
+                isInnerClass = true;
+            else if (rest.equals("system Ldalvik/annotation/EnclosingMethod;"))
+                waitForEnclosingMethod = true;
         } else if (id.equals("value")) {
             if (!waitForEnclosingMethod)
                 return;

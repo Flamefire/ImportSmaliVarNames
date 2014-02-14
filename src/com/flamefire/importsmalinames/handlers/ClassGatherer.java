@@ -14,6 +14,7 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+
 package com.flamefire.importsmalinames.handlers;
 
 import org.eclipse.jdt.core.IJavaElement;
@@ -46,7 +47,7 @@ public class ClassGatherer {
                 String name = el.getElementName();
                 if (name.equals("")) {
                     anonCount.set(anonCount.get() + 1);
-                    name = "$" + anonCount;
+                    name = "." + anonCount;
                 } else if (!parent.equals(""))
                     parent += ".";
                 parent += name;
@@ -62,7 +63,6 @@ public class ClassGatherer {
                     gather(e, parent, nAnonCount);
             }
         } catch (JavaModelException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
