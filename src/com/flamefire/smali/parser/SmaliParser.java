@@ -42,6 +42,7 @@ public class SmaliParser {
         Map<String, SmaliClass> result = new HashMap<String, SmaliClass>();
         for (SmaliClass c : classes.values()) {
             c.finalName = c.finalName.replace('$', '.');
+            c.name = c.finalName;
             result.put(c.finalName, c);
         }
         return result;
@@ -76,16 +77,18 @@ public class SmaliParser {
             e.printStackTrace();
         }
         if (curClass != null) {
-            // Fix long params
-            for (SmaliMethod m : curClass.methods) {
-                m.cleanUpVars();
-            }
             // Inner classes may have parent as first param
             if (isInnerClass) {
                 for (SmaliMethod m : curClass.methods) {
                     if (m.name.equals("<init>") && m.parameters.size() > 0 && m.parameters.get(0) == null)
                         m.parameters.remove(0);
                 }
+            }
+            // Fix long params
+            for (SmaliMethod m : curClass.methods) {
+                m.cleanUpVars();
+                if (m.containsNullParams())
+                    System.err.println("Method " + curClass.finalName + "." + m.name + " contains unknown parameters");
             }
             // Update real containing class name for classes in this class
             for (SmaliClass c : classes.values()) {

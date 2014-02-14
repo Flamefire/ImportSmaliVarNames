@@ -15,15 +15,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package com.flamefire.smali.types;
+package com.flamefire.types;
 
-import com.flamefire.types.CClass;
+import java.util.ArrayList;
+import java.util.List;
 
-public class SmaliClass extends CClass<SmaliMethod, SmaliVariable> {
-    public String finalName;
+public class CClass<T extends CMethod<U>, U extends CVariable> {
+    public final List<T> methods = new ArrayList<T>();
+    public String name;
 
-    public SmaliClass(String name) {
-        super(name);
-        finalName = name;
+    public CClass(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        String result = name + "{\n";
+        for (T m : methods) {
+            result += "\t" + m + "\n";
+        }
+        result += "}";
+        return result;
+    }
+
+    public List<T> getMethods(String mName, int paramCount) {
+        List<T> result = new ArrayList<T>();
+        for (T m : methods) {
+            if (m.name.equals(mName) && m.parameters.size() == paramCount)
+                result.add(m);
+        }
+        return result;
     }
 }

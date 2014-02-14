@@ -15,15 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package com.flamefire.smali.types;
+package com.flamefire.types;
 
-import com.flamefire.types.CClass;
+public class CVariable {
+    public final String name;
+    protected final String type;
 
-public class SmaliClass extends CClass<SmaliMethod, SmaliVariable> {
-    public String finalName;
+    public CVariable(String name, String type) {
+        this.name = name;
+        this.type = type;
+    }
 
-    public SmaliClass(String name) {
-        super(name);
-        finalName = name;
+    @Override
+    public String toString() {
+        return type + " " + name;
     }
 }

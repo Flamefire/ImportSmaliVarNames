@@ -14,23 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
+
 package com.flamefire.smali.types;
 
-public class SmaliVariable {
-    public final String name;
-    public final String type;
+import com.flamefire.types.CVariable;
+
+public class SmaliVariable extends CVariable {
 
     public SmaliVariable(String name, String type) {
-        this.name = name;
-        this.type = type;
+        super(name, type);
     }
 
     public boolean isLong() {
-        return type.equals("J");
+        return type.equals("J") || type.equals("D");
     }
 
-    @Override
-    public String toString() {
-        return type + " " + name;
+    public String getTypeSignature() {
+        return type;
     }
 }

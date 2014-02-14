@@ -15,15 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package com.flamefire.smali.types;
+package com.flamefire.importsmalinames.types;
 
 import com.flamefire.types.CClass;
 
-public class SmaliClass extends CClass<SmaliMethod, SmaliVariable> {
-    public String finalName;
+public class JavaClass extends CClass<JavaMethod, JavaVariable> {
 
-    public SmaliClass(String name) {
+    public JavaClass(String name) {
         super(name);
-        finalName = name;
     }
 }

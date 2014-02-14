@@ -17,11 +17,13 @@
 
 package com.flamefire.importsmalinames.refactoring;
 
+import com.flamefire.importsmalinames.types.JavaClass;
 import com.flamefire.importsmalinames.utils.Util;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -35,6 +37,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 import java.util.List;
+import java.util.Map;
 
 public class RefactoringHelper {
     private static IProgressMonitor NULL_MON = new NullProgressMonitor();
@@ -84,10 +87,13 @@ public class RefactoringHelper {
     }
 
     public static String convertSignatureToType(String type) {
+        // Do not forget we may have an array type
         if (type.startsWith("I"))
             return "int" + type.substring(1);
         if (type.startsWith("J"))
             return "long" + type.substring(1);
+        if (type.startsWith("D"))
+            return "double" + type.substring(1);
         if (type.startsWith("B"))
             return "boolean" + type.substring(1);
         return standardizeJavaType(type);
@@ -107,5 +113,12 @@ public class RefactoringHelper {
         LocalVarGatherer lv = new LocalVarGatherer(method);
         cu.accept(lv);
         return lv.vars;
+    }
+
+    public static Map<String, JavaClass> getTypesInCU(ICompilationUnit icu) {
+        CompilationUnit cu = Util.createCU(icu);
+        JavaTypesGatherVisitor lv = new JavaTypesGatherVisitor();
+        cu.accept(lv);
+        return lv.classes;
     }
 }

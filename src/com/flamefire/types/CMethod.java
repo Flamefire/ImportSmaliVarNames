@@ -15,35 +15,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package com.flamefire.smali.types;
+package com.flamefire.types;
 
-import com.flamefire.types.CMethod;
-
+import java.util.ArrayList;
 import java.util.List;
 
-public class SmaliMethod extends CMethod<SmaliVariable> {
+public class CMethod<T extends CVariable> {
+    public final List<T> parameters = new ArrayList<T>();
+    public final List<T> variables = new ArrayList<T>();
+    public final String name;
 
-    public SmaliMethod(String name) {
-        super(name);
+    public CMethod(String name) {
+        this.name = name;
     }
 
-    private void cleanUpLongVars(List<SmaliVariable> vars) {
-        for (int i = 0; i < vars.size(); i++) {
-            if (vars.get(i) != null && vars.get(i).isLong() && i + 1 < vars.size()) {
-                assert (vars.get(i + 1) == null);
-                vars.remove(i + 1);
-            }
+    @Override
+    public String toString() {
+        String result = name + "(";
+        for (int i = 0; i < parameters.size(); i++) {
+            if (i > 0)
+                result += ", ";
+            result += parameters.get(i);
         }
+        result += "): ";
+        for (int i = 0; i < variables.size(); i++) {
+            if (i > 0)
+                result += ", ";
+            result += variables.get(i);
+        }
+        return result;
     }
 
-    public void cleanUpVars() {
-        cleanUpLongVars(parameters);
+    public int getNumberOfParameters() {
+        return parameters.size();
     }
 
-    public boolean containsNullParams() {
-        for (SmaliVariable v : parameters)
-            if (v == null)
-                return true;
-        return false;
+    public int getNumberOfLocalVariables() {
+        return variables.size();
     }
 }
