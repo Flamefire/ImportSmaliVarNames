@@ -42,7 +42,6 @@ public class SmaliParser {
     public Map<String, SmaliClass> getResult() {
         Map<String, SmaliClass> result = new HashMap<String, SmaliClass>();
         for (SmaliClass c : classes.values()) {
-            c.finalName = c.finalName.replace('$', '.');
             c.name = c.finalName;
             result.put(c.finalName, c);
         }

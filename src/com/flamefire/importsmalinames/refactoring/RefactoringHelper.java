@@ -87,6 +87,8 @@ public class RefactoringHelper {
     }
 
     public static String convertSignatureToType(String type) {
+        if (type.startsWith("."))
+            type = type.substring(1) + "...";
         // Do not forget we may have an array type
         if (type.startsWith("I"))
             return "int" + type.substring(1);
@@ -96,6 +98,7 @@ public class RefactoringHelper {
             return "double" + type.substring(1);
         if (type.startsWith("B"))
             return "boolean" + type.substring(1);
+        type = type.replace("$", ".");
         return standardizeJavaType(type);
     }
 

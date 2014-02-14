@@ -59,7 +59,7 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         parentStack.push(curParent);
         classStack.push(curClass);
         if (!curParent.equals(""))
-            curParent += ".";
+            curParent += "$";
         curParent += name;
         curClass = new JavaClass(pck + curParent);
         classes.put(curClass.name, curClass);
@@ -84,7 +84,7 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
     @Override
     public boolean visit(AnonymousClassDeclaration node) {
         curAnonCt++;
-        newClass("$" + curAnonCt);
+        newClass(String.valueOf(curAnonCt));
         return true;
     }
 
