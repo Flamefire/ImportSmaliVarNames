@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CMethod<T extends CVariable> {
+    public static final String CONSTRUCTOR = "<init>";
     public final List<T> parameters = new ArrayList<T>();
     public final List<T> variables = new ArrayList<T>();
     public final String name;
@@ -52,5 +53,9 @@ public class CMethod<T extends CVariable> {
 
     public int getNumberOfLocalVariables() {
         return variables.size();
+    }
+
+    public boolean isConstructor() {
+        return name.equals(CONSTRUCTOR);
     }
 }

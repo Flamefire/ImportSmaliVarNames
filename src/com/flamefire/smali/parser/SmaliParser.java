@@ -36,6 +36,7 @@ public class SmaliParser {
     private SmaliMethod curMethod;
     private boolean waitForEnclosingMethod;
     private boolean isStaticMethod;
+    private boolean isEnum;
     private boolean isInnerClass;
 
     public Map<String, SmaliClass> getResult() {
@@ -53,6 +54,7 @@ public class SmaliParser {
         curMethod = null;
         waitForEnclosingMethod = false;
         isInnerClass = false;
+        isEnum = false;
         BufferedReader br;
         try {
             br = new BufferedReader(new FileReader(file));
@@ -80,13 +82,18 @@ public class SmaliParser {
             // Inner classes may have parent as first param
             if (isInnerClass) {
                 for (SmaliMethod m : curClass.methods) {
-                    if (m.name.equals("<init>") && m.parameters.size() > 0 && m.parameters.get(0) == null)
+                    if (m.isConstructor() && m.parameters.size() > 0 && m.parameters.get(0) == null)
                         m.parameters.remove(0);
                 }
             }
             // Fix long params
             for (SmaliMethod m : curClass.methods) {
                 m.cleanUpVars();
+                // Enum constructors contain parameters for the enum itself,
+                // they are NOT shown in the code
+                if (isEnum && m.isConstructor()) {
+                    m.removeLeadingNullParams();
+                }
                 if (m.containsNullParams())
                     System.err.println("Method " + curClass.finalName + "." + m.name + " contains unknown parameters");
             }
@@ -153,6 +160,9 @@ public class SmaliParser {
                 isInnerClass = true;
             else if (rest.equals("system Ldalvik/annotation/EnclosingMethod;"))
                 waitForEnclosingMethod = true;
+        } else if (id.equals(".super")) {
+            if (rest.equals("Ljava/lang/Enum;"))
+                isEnum = true;
         } else if (id.equals("value")) {
             if (!waitForEnclosingMethod)
                 return;

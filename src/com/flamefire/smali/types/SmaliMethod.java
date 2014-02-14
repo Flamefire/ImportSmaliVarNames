@@ -40,6 +40,15 @@ public class SmaliMethod extends CMethod<SmaliVariable> {
         cleanUpLongVars(parameters);
     }
 
+    public void removeLeadingNullParams() {
+        for (int i = 0; i < parameters.size(); i++) {
+            if (parameters.get(i) != null)
+                break;
+            parameters.remove(i);
+            i--;
+        }
+    }
+
     public boolean containsNullParams() {
         for (SmaliVariable v : parameters)
             if (v == null)
