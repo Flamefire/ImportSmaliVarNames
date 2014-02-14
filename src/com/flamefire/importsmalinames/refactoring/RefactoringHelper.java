@@ -79,7 +79,7 @@ public class RefactoringHelper {
             type = type.substring(0, p);
         if (type.endsWith(";"))
             type = type.substring(0, type.length() - 1);
-        if (type.startsWith("["))
+        while (type.startsWith("["))
             type = type.substring(1) + "[]";
         if (type.startsWith("Q"))
             type = type.substring(1);

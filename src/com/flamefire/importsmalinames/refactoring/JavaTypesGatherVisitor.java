@@ -20,6 +20,7 @@ package com.flamefire.importsmalinames.refactoring;
 import com.flamefire.importsmalinames.types.JavaClass;
 import com.flamefire.importsmalinames.types.JavaMethod;
 import com.flamefire.importsmalinames.types.JavaVariable;
+import com.flamefire.types.CMethod;
 
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
@@ -92,12 +93,24 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         classEnd();
     }
 
+    private String getArrayDim(int dim) {
+        String res = "";
+        for (int i = 0; i < dim; i++) {
+            res += "[]";
+        }
+        return res;
+    }
+
+    private String getTypeFromVarDecl(SingleVariableDeclaration v) {
+        return v.getType().toString() + getArrayDim(v.getExtraDimensions());
+    }
+
     @Override
     public boolean visit(MethodDeclaration node) {
         parentStack.push(curParent);
         methodStack.push(curMethod);
         anonCtStack.push(curAnonCt);
-        String name = (node.isConstructor()) ? "<init>" : node.getName().toString();
+        String name = (node.isConstructor()) ? CMethod.CONSTRUCTOR : node.getName().toString();
         if (!curParent.equals(""))
             curParent += "->";
         curParent += name;
@@ -105,7 +118,7 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         @SuppressWarnings("unchecked")
         List<SingleVariableDeclaration> params = node.parameters();
         for (SingleVariableDeclaration p : params) {
-            curMethod.parameters.add(new JavaVariable(p.getName().toString(), p.getType().toString()));
+            curMethod.parameters.add(new JavaVariable(p.getName().toString(), getTypeFromVarDecl(p)));
         }
         curClass.methods.add(curMethod);
         curAnonCt = 0;
@@ -124,12 +137,13 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         String type = node.getType().toString();
         for (@SuppressWarnings("unchecked")
         Iterator<VariableDeclarationFragment> iter = node.fragments().iterator(); iter.hasNext();) {
-            VariableDeclarationFragment fragment = iter.next();
+            VariableDeclarationFragment var = iter.next();
             // VariableDeclarationFragment: is the plain variable declaration
             // part.
             // Example: "int x=0, y=0;" contains two
             // VariableDeclarationFragments, "x=0" and "y=0"
-            curMethod.variables.add(new JavaVariable(fragment.getName().toString(), type));
+            curMethod.variables.add(new JavaVariable(var.getName().toString(), type
+                    + getArrayDim(var.getExtraDimensions())));
         }
         return true;
     }
