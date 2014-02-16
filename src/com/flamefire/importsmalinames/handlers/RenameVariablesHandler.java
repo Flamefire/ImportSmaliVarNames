@@ -131,7 +131,9 @@ public class RenameVariablesHandler extends AbstractHandler {
         com.flamefire.importsmalinames.utils.Util.setPersistentProperty(res, LASTFOLDER, j.getSelectedFile()
                 .getAbsolutePath());
         File smaliFolder = j.getSelectedFile();
-        RefactoringController controller = new RefactoringController(smaliFolder);
+        RefactoringController controller = new RefactoringController();
+        if (!controller.init(smaliFolder))
+            return;
         controller.renameVariablesInFile(cu);
     }
 

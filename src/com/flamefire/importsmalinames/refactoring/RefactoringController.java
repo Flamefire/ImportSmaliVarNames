@@ -37,18 +37,21 @@ import java.util.List;
 import java.util.Map;
 
 public class RefactoringController {
-    private Map<String, SmaliClass> smaliClasses = new HashMap<String, SmaliClass>();
+    private Map<String, SmaliClass> smaliClasses = null;
+    private final Map<JavaMethod, Map<String, String>> renamings = new HashMap<JavaMethod, Map<String, String>>();
 
-    public RefactoringController(File smaliFolder) {
+    public boolean init(File smaliFolder) {
         List<File> smaliFiles = FileUtil.getFilesRecursive(smaliFolder, new SuffixFilter(TypeFilter.FILE, "smali"));
         SmaliParser parser = new SmaliParser();
         for (File f : smaliFiles)
             if (!parser.parseFile(f))
-                return;
+                return false;
         smaliClasses = parser.getResult();
+        return true;
     }
 
     public void renameVariablesInFile(ICompilationUnit cu) {
+        renamings.clear();
         Map<String, JavaClass> classes = RefactoringHelper.getTypesInCU(cu);
         for (String sClass : classes.keySet()) {
             renameVariablesInClass(sClass, classes.get(sClass));
@@ -80,7 +83,7 @@ public class RefactoringController {
             SmaliMethod smaliMethod = methods.get(i);
             List<JavaVariable> p = method.parameters;
             for (int j = 0; j < p.size(); j++) {
-                String pType = p.get(j).getType();// RefactoringHelper.convertSignatureToType(p[j].getTypeSignature());
+                String pType = p.get(j).getType();
                 String p2Type = RefactoringHelper.convertSignatureToType(smaliMethod.parameters.get(j)
                         .getTypeSignature());
                 if (!RefactoringHelper.typeIsEqual(pType, p2Type)) {
@@ -101,7 +104,17 @@ public class RefactoringController {
             System.out.println("Error: To many smali methods match");
             return;
         }
+        renamings.put(method, new HashMap<String, String>());
+        renameParameters(method, methods.get(0));
         renameLocalVariables(method, methods.get(0));
+    }
+
+    private void renameParameters(JavaMethod method, SmaliMethod smMethod) {
+        Map<String, String> rename = renamings.get(method);
+        List<JavaVariable> p = method.parameters;
+        for (int j = 0; j < p.size(); j++) {
+            rename.put(p.get(j).name, smMethod.parameters.get(j).name);
+        }
     }
 
     private String matchLocalVar(JavaVariable locVar, SmaliMethod smMethod) {
@@ -118,8 +131,11 @@ public class RefactoringController {
     }
 
     private void renameLocalVariables(JavaMethod method, SmaliMethod smMethod) {
+        Map<String, String> rename = renamings.get(method);
         for (JavaVariable v : method.variables) {
-            System.out.println(v.name + "->" + matchLocalVar(v, smMethod));
+            String newName = matchLocalVar(v, smMethod);
+            if (newName != null)
+                rename.put(v.name, newName);
         }
     }
 
