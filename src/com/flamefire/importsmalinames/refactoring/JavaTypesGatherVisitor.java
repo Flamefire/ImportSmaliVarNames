@@ -22,8 +22,10 @@ import com.flamefire.importsmalinames.types.JavaMethod;
 import com.flamefire.importsmalinames.types.JavaVariable;
 import com.flamefire.types.CMethod;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -42,12 +44,16 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
     public final Stack<JavaClass> classStack = new Stack<JavaClass>();
     public final Stack<JavaMethod> methodStack = new Stack<JavaMethod>();
     public final Stack<Integer> anonCtStack = new Stack<Integer>();
-    private JavaClass curClass = null;
-    private JavaMethod curMethod = null;
+    protected JavaClass curClass = null;
+    protected JavaMethod curMethod = null;
     private int curAnonCt = 0;
     private String curParent = "";
-    public final Map<String, JavaClass> classes = new HashMap<String, JavaClass>();
+    public final Map<String, JavaClass> classes;
     private String pck = "";
+
+    public JavaTypesGatherVisitor() {
+        classes = new HashMap<String, JavaClass>();
+    }
 
     @Override
     public boolean visit(PackageDeclaration node) {
@@ -55,14 +61,21 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         return false;
     }
 
-    private void newClass(String name) {
+    // Gets a just found class
+    // Returns the class that will be new curClass
+    protected JavaClass handleNewClass(ASTNode node, JavaClass jClass) {
+        classes.put(jClass.name, jClass);
+        return jClass;
+    }
+
+    private void newClassFound(ASTNode node, String name) {
         parentStack.push(curParent);
         classStack.push(curClass);
         if (!curParent.equals(""))
             curParent += "$";
         curParent += name;
-        curClass = new JavaClass(pck + curParent);
-        classes.put(curClass.name, curClass);
+        JavaClass jClass = new JavaClass(pck + curParent);
+        curClass = handleNewClass(node, jClass);
     }
 
     private void classEnd() {
@@ -72,7 +85,18 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(TypeDeclaration node) {
-        newClass(node.getName().toString());
+        newClassFound(node, node.getName().toString());
+        return true;
+    }
+
+    @Override
+    public void endVisit(EnumDeclaration node) {
+        classEnd();
+    }
+
+    @Override
+    public boolean visit(EnumDeclaration node) {
+        newClassFound(node, node.getName().toString());
         return true;
     }
 
@@ -84,7 +108,7 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
     @Override
     public boolean visit(AnonymousClassDeclaration node) {
         curAnonCt++;
-        newClass(String.valueOf(curAnonCt));
+        newClassFound(node, String.valueOf(curAnonCt));
         return true;
     }
 
@@ -108,6 +132,13 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         return type;
     }
 
+    // Gets a just found method (With parameters set)
+    // Returns the method that will be new curMethod
+    protected JavaMethod handleNewMethod(MethodDeclaration node, JavaMethod jMethod) {
+        curClass.methods.add(jMethod);
+        return jMethod;
+    }
+
     @Override
     public boolean visit(MethodDeclaration node) {
         parentStack.push(curParent);
@@ -117,13 +148,13 @@ public class JavaTypesGatherVisitor extends ASTVisitor {
         if (!curParent.equals(""))
             curParent += "->";
         curParent += name;
-        curMethod = new JavaMethod(name);
+        JavaMethod jMethod = new JavaMethod(name);
         @SuppressWarnings("unchecked")
         List<SingleVariableDeclaration> params = node.parameters();
         for (SingleVariableDeclaration p : params) {
-            curMethod.parameters.add(new JavaVariable(p.getName().toString(), getTypeFromParam(p)));
+            jMethod.parameters.add(new JavaVariable(p.getName().toString(), getTypeFromParam(p)));
         }
-        curClass.methods.add(curMethod);
+        curMethod = handleNewMethod(node, jMethod);
         curAnonCt = 0;
         return true;
     }
