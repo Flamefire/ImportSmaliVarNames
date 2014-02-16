@@ -20,9 +20,11 @@ package com.flamefire.importsmalinames.refactoring;
 import com.flamefire.fileutils.FileUtil;
 import com.flamefire.fileutils.SuffixFilter;
 import com.flamefire.fileutils.TypeFilter;
+import com.flamefire.importsmalinames.astutils.RenameVariablesVisitor;
 import com.flamefire.importsmalinames.types.JavaClass;
 import com.flamefire.importsmalinames.types.JavaMethod;
 import com.flamefire.importsmalinames.types.JavaVariable;
+import com.flamefire.importsmalinames.utils.Util;
 import com.flamefire.smali.parser.SmaliParser;
 import com.flamefire.smali.types.SmaliClass;
 import com.flamefire.smali.types.SmaliMethod;
@@ -30,6 +32,8 @@ import com.flamefire.smali.types.SmaliVariable;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 
 import java.io.File;
 import java.util.HashMap;
@@ -50,12 +54,17 @@ public class RefactoringController {
         return true;
     }
 
-    public void renameVariablesInFile(ICompilationUnit cu) {
+    public boolean renameVariablesInFile(ICompilationUnit cu) {
         renamings.clear();
         Map<String, JavaClass> classes = RefactoringHelper.getTypesInCU(cu);
         for (String sClass : classes.keySet()) {
             renameVariablesInClass(sClass, classes.get(sClass));
         }
+        CompilationUnit unit = Util.createCU(cu);
+        ASTRewrite astRewrite = ASTRewrite.create(unit.getAST());
+        RenameVariablesVisitor v = new RenameVariablesVisitor(classes, renamings, astRewrite);
+        unit.accept(v);
+        return RefactoringHelper.rewriteAST(cu, astRewrite);
     }
 
     private void renameVariablesInClass(String sClass, JavaClass curClass) {
@@ -113,7 +122,7 @@ public class RefactoringController {
         Map<String, String> rename = renamings.get(method);
         List<JavaVariable> p = method.parameters;
         for (int j = 0; j < p.size(); j++) {
-            rename.put(p.get(j).name, smMethod.parameters.get(j).name);
+            addRenameVar(p.get(j), smMethod.parameters.get(j).name, rename);
         }
     }
 
@@ -134,9 +143,15 @@ public class RefactoringController {
         Map<String, String> rename = renamings.get(method);
         for (JavaVariable v : method.variables) {
             String newName = matchLocalVar(v, smMethod);
-            if (newName != null)
-                rename.put(v.name, newName);
+            if (newName != null) {
+                addRenameVar(v, newName, rename);
+            }
         }
+    }
+
+    private void addRenameVar(JavaVariable var, String newName, Map<String, String> rename) {
+        rename.put(var.name, newName);
+        System.out.println(var.name + "->" + newName);
     }
 
 }

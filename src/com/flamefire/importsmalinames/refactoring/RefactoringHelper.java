@@ -26,15 +26,21 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
 import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringContribution;
 import org.eclipse.ltk.core.refactoring.RefactoringCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+import org.eclipse.text.edits.MalformedTreeException;
+import org.eclipse.text.edits.TextEdit;
 
 import java.util.Map;
 
@@ -116,4 +122,51 @@ public class RefactoringHelper {
         cu.accept(lv);
         return lv.classes;
     }
+
+    /**
+     * Overwrite AST of given CompilationUnit
+     * 
+     * @param cu CompilationUnit to change
+     * @param astRewrite ASTRewrite object with changes
+     */
+    public static boolean rewriteAST(ICompilationUnit cu, ASTRewrite astRewrite) {
+        try {
+            Document doc = new Document(cu.getSource());
+            TextEdit edits = astRewrite.rewriteAST(doc, null);
+            edits.apply(doc);
+            cu.getBuffer().setContents(doc.get());
+        } catch (JavaModelException e) {
+            e.printStackTrace();
+            return false;
+        } catch (MalformedTreeException e) {
+            e.printStackTrace();
+            return false;
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+        // try {
+        // MultiTextEdit edit = new MultiTextEdit();
+        // TextEdit astEdit = astRewrite.rewriteAST();
+        //
+        // if (!isEmptyEdit(astEdit))
+        // edit.addChild(astEdit);
+        // if (isEmptyEdit(edit))
+        // return false;
+        //
+        // TextFileChange change = new TextFileChange(unit.getElementName(),
+        // (IFile) unit.getResource());
+        // change.setTextType("java");
+        // change.setEdit(edit);
+        // } catch (JavaModelException e) {
+        // e.printStackTrace();
+        // return false;
+        // } catch (IllegalArgumentException e) {
+        // e.printStackTrace();
+        // return false;
+        // }
+        // return true;
+    }
+
 }

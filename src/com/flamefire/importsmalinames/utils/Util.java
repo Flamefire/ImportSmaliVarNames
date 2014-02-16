@@ -31,6 +31,7 @@ import org.eclipse.text.edits.TextEdit;
 public abstract class Util {
     public static CompilationUnit createCU(ICompilationUnit cu) {
         ASTParser parser = ASTParser.newParser(AST.JLS4);
+        parser.setProject(cu.getJavaProject());
         parser.setSource(cu);
         parser.setResolveBindings(true);
         CompilationUnit unit = (CompilationUnit) parser.createAST(null);
