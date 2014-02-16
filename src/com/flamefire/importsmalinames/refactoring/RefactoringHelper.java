@@ -17,6 +17,7 @@
 
 package com.flamefire.importsmalinames.refactoring;
 
+import com.flamefire.importsmalinames.astutils.JavaTypesGatherVisitor;
 import com.flamefire.importsmalinames.types.JavaClass;
 import com.flamefire.importsmalinames.utils.Util;
 
@@ -25,7 +26,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
@@ -36,7 +36,6 @@ import org.eclipse.ltk.core.refactoring.RefactoringContribution;
 import org.eclipse.ltk.core.refactoring.RefactoringCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
-import java.util.List;
 import java.util.Map;
 
 public class RefactoringHelper {
@@ -109,13 +108,6 @@ public class RefactoringHelper {
         if (smaliType.endsWith("." + javaType))
             return true;
         return false;
-    }
-
-    public static List<LocalVar> getLocalVariables(IMethod method) {
-        CompilationUnit cu = Util.createCU(method.getCompilationUnit());
-        LocalVarGatherer lv = new LocalVarGatherer(method);
-        cu.accept(lv);
-        return lv.vars;
     }
 
     public static Map<String, JavaClass> getTypesInCU(ICompilationUnit icu) {

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package com.flamefire.importsmalinames.refactoring;
+package com.flamefire.importsmalinames.astutils;
 
 import com.flamefire.importsmalinames.types.JavaClass;
 import com.flamefire.importsmalinames.types.JavaMethod;
