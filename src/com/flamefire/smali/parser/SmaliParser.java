@@ -96,10 +96,12 @@ public class SmaliParser {
                 if (m.containsNullParams())
                     System.err.println("Method " + curClass.finalName + "." + m.name + " contains unknown parameters");
             }
-            // Update real containing class name for classes in this class
-            for (SmaliClass c : classes.values()) {
-                if (c.finalName.startsWith(curClass.name + "->")) {
-                    c.finalName = curClass.finalName + c.finalName.substring(curClass.name.length() + 2);
+            if (!curClass.name.equals(curClass.finalName)) {
+                // Update real containing class name for classes in this class
+                for (SmaliClass c : classes.values()) {
+                    if (c.finalName.startsWith(curClass.name + "->")) {
+                        c.finalName = curClass.finalName + c.finalName.substring(curClass.name.length());
+                    }
                 }
             }
         }
