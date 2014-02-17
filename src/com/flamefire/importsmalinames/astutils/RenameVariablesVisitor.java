@@ -56,6 +56,7 @@ public class RenameVariablesVisitor extends TypeTraceVisitor {
     protected void newClassFound(ASTNode node, String name) {
         super.newClassFound(node, name);
         renamingStack.push(renaming);
+        renaming = new HashMap<String, String>(renaming);
     }
 
     @Override
@@ -67,6 +68,7 @@ public class RenameVariablesVisitor extends TypeTraceVisitor {
     @Override
     public boolean visit(MethodDeclaration node) {
         renamingStack.push(renaming);
+        renaming = new HashMap<String, String>(renaming);
         return super.visit(node);
     }
 
