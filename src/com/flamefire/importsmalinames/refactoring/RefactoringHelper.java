@@ -46,11 +46,11 @@ import java.util.Map;
 
 public class RefactoringHelper {
     private static IProgressMonitor NULL_MON = new NullProgressMonitor();
-    private static char[] SigTypesFrom = {
-            'B', 'I', 'L', 'F', 'D'
+    private static String[] SigTypesFrom = {
+            "B", "C", "D", "F", "I", "J", "S", "Z"
     };
     private static String[] SigTypesTo = {
-            "boolean", "int", "long", "float", "double"
+            "byte", "char", "double", "float", "int", "long", "short", "boolean"
     };
 
     // Based on Code of
@@ -77,7 +77,6 @@ public class RefactoringHelper {
             Change change = ref.createChange(NULL_MON);
             change.perform(NULL_MON);
         } catch (CoreException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -86,10 +85,20 @@ public class RefactoringHelper {
     // Makes a java type standard (No "Q...;")
     public static String standardizeJavaType(String type) {
         int p = type.indexOf('<');
-        if (p >= 0)
-            type = type.substring(0, p);
-        if (type.endsWith(";"))
-            type = type.substring(0, type.length() - 1);
+        if (p >= 0) {
+            int p2 = type.lastIndexOf('>') + 1;
+            if (p2 < type.length())
+                type = type.substring(0, p) + type.substring(p2);
+            else
+                type = type.substring(0, p);
+        }
+        p = type.indexOf(';');
+        if (p >= 0) {
+            if (p + 1 < type.length())
+                type = type.substring(0, p) + type.substring(p + 1);
+            else
+                type = type.substring(0, p);
+        }
         while (type.startsWith("["))
             type = type.substring(1) + "[]";
         if (type.startsWith("Q"))
@@ -97,7 +106,7 @@ public class RefactoringHelper {
         return type;
     }
 
-    private static String replaceSigType(String type, char from, String to) {
+    private static String replaceSigType(String type, String from, String to) {
         // Do not forget we may have an array type
         if (type.equals(from) || type.startsWith(from + "...") || type.startsWith(from + "[]"))
             type = to + type.substring(1);
@@ -105,11 +114,15 @@ public class RefactoringHelper {
     }
 
     public static String convertSignatureToType(String type) {
+        while (type.startsWith("["))
+            type = type.substring(1) + "[]";
         if (type.startsWith("."))
             type = type.substring(1) + "...";
         for (int i = 0; i < SigTypesFrom.length; i++) {
             type = replaceSigType(type, SigTypesFrom[i], SigTypesTo[i]);
         }
+        if (type.startsWith("<"))
+            type = type.substring(1);
         type = type.replace("$", ".");
         return standardizeJavaType(type);
     }

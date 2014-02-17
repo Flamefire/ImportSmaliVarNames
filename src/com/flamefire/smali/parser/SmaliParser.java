@@ -109,7 +109,7 @@ public class SmaliParser {
     private static String smaliTypeToJavaType(String type) {
         if (type.endsWith(";"))
             type = type.substring(0, type.length() - 1);
-        if (type.startsWith("["))
+        while (type.startsWith("["))
             type = type.substring(1) + "[]";
         if (type.startsWith("L"))
             type = type.substring(1);
@@ -134,22 +134,7 @@ public class SmaliParser {
         String id = line.substring(0, p);
         String rest = line.substring(p + 1);
         if (id.equals(".class")) {
-            // Skip visibility
-            String className = rest.substring(rest.indexOf(' ') + 1);
-            // Strip modifiers
-            // DO NOT CHANGE ORDER of all of them
-            className = removePrefix(className, "interface");
-            className = removePrefix(className, "abstract");
-            className = removePrefix(className, "final");
-            className = removePrefix(className, "annotation");
-            className = removePrefix(className, "enum");
-            className = smaliTypeToJavaType(className);
-            if (!isNameValid(className)) {
-                System.err.println("Invalid class name '" + className + "' in line " + line);
-                return;
-            }
-            curClass = new SmaliClass(className);
-            classes.put(className, curClass);
+            handleClass(line, rest);
             return;
         }
         if (curClass == null)
@@ -163,92 +148,135 @@ public class SmaliParser {
             if (rest.equals("Ljava/lang/Enum;"))
                 isEnum = true;
         } else if (id.equals("value")) {
-            if (!waitForEnclosingMethod)
-                return;
-            int start = rest.indexOf("->");
-            int end = rest.indexOf("(");
-            String methodName = rest.substring(start, end);
-            String fName = curClass.finalName;
-            start = fName.lastIndexOf('$');
-            String topName = fName.substring(0, start);
-            // Find real containing class name
-            if (classes.containsKey(topName))
-                topName = classes.get(topName).finalName;
-            curClass.finalName = topName + methodName + fName.substring(start);
-            waitForEnclosingMethod = false;
+            handleValue(rest);
         } else if (id.equals(".method")) {
-            String methodName = rest.substring(0, rest.indexOf('('));
-            // Strip modifiers
-            // DO NOT CHANGE ORDER of all of them
-            methodName = removePrefix(methodName, "public");
-            methodName = removePrefix(methodName, "private");
-            methodName = removePrefix(methodName, "protected");
-            // Handle static methods
-            if (methodName.startsWith("static")) {
-                isStaticMethod = true;
-                methodName = removePrefix(methodName, "static");
-            } else
-                isStaticMethod = false;
-            methodName = removePrefix(methodName, "bridge");
-            // Handle compiler magic (Getter, Setter)
-            if (methodName.startsWith("synthetic"))
-                return;
-            // Handle other modifiers
-            methodName = removePrefix(methodName, "final");
-            boolean isVarArgs = false;
-            if (methodName.startsWith("varargs")) {
-                isVarArgs = true;
-                methodName = removePrefix(methodName, "varargs");
-            }
-            boolean isAbstract = false;
-            if (methodName.startsWith("abstract")) {
-                isVarArgs = true;
-                methodName = removePrefix(methodName, "abstract");
-            }
-            methodName = removePrefix(methodName, "constructor");
-            methodName = removePrefix(methodName, "declared-synchronized");
-            if (!isNameValid(methodName)) {
-                System.err.println("Invalid method name '" + methodName + "' in line " + line);
-                return;
-            }
-            curMethod = new SmaliMethod(methodName, isAbstract, isVarArgs);
-            curClass.methods.add(curMethod);
+            handleMethod(line, rest);
         } else if (id.equals(".end")) {
             if (rest.equals("method"))
                 curMethod = null;
         } else if (id.equals(".param") || id.equals(".local")) {
-            // Skip if we are in invalid methods
-            if (curMethod == null)
-                return;
-            char parOrVar = rest.charAt(0);
-            int num = Integer.valueOf(rest.substring(1, rest.indexOf(',')));
-            rest = rest.substring(rest.indexOf(", \"") + 3);
-            String name = rest.substring(0, rest.indexOf('"'));
-            int start = rest.indexOf("#");
-            if (start < 0)
-                start = rest.indexOf(':');
-            int end = rest.indexOf(',') - 1;
-            if (end < 0)
-                end = rest.length();
-            String type = rest.substring(start + 1, end).trim();
-            type = smaliTypeToJavaType(type);
-            SmaliVariable var = new SmaliVariable(name, type);
-            if (parOrVar == 'p') {
-                // Non-static methods have a hidden "this" param
-                if (!isStaticMethod) {
-                    if (num == 0) {
-                        if (!name.equals("this"))
-                            System.err.println("Found p0 '" + name + "' in line " + line);
-                        return;
-                    }
-                    num--;
-                }
-                while (curMethod.parameters.size() <= num)
-                    curMethod.parameters.add(null);
-                curMethod.parameters.set(num, var);
-            } else {
-                curMethod.variables.add(var);
-            }
+            handleVariable(line, rest);
         }
+    }
+
+    private void handleVariable(String line, String rest) {
+        // Skip if we are in invalid methods
+        if (curMethod == null)
+            return;
+        char parOrVar = rest.charAt(0);
+        int num = Integer.valueOf(rest.substring(1, rest.indexOf(',')));
+        rest = rest.substring(rest.indexOf(", \"") + 3);
+        String name = rest.substring(0, rest.indexOf('"'));
+        String type;
+        int start = rest.indexOf("#");
+        if (start < 0)
+            start = rest.indexOf(':');
+        int end = rest.indexOf(',') - 1;
+        if (end < 0)
+            end = rest.length();
+        if (rest.startsWith(" \"T", end + 2)) {
+            // Generic!
+            start = end + 5;
+            end = rest.indexOf(';', start + 1);
+            type = "<" + rest.substring(start, end);
+        } else if (rest.startsWith(" \"[T", end + 2)) {
+            // Generic!
+            start = end + 6;
+            end = rest.indexOf(';', start + 1);
+            type = "[<" + rest.substring(start, end);
+        } else
+            type = rest.substring(start + 1, end).trim();
+        type = smaliTypeToJavaType(type);
+        SmaliVariable var = new SmaliVariable(name, type);
+        if (parOrVar == 'p') {
+            // Non-static methods have a hidden "this" param
+            if (!isStaticMethod) {
+                if (num == 0) {
+                    if (!name.equals("this"))
+                        System.err.println("Found p0 '" + name + "' in line " + line);
+                    return;
+                }
+                num--;
+            }
+            while (curMethod.parameters.size() <= num)
+                curMethod.parameters.add(null);
+            curMethod.parameters.set(num, var);
+        } else {
+            curMethod.variables.add(var);
+        }
+    }
+
+    private void handleMethod(String line, String rest) {
+        String methodName = rest.substring(0, rest.indexOf('('));
+        // Strip modifiers
+        // DO NOT CHANGE ORDER of all of them
+        methodName = removePrefix(methodName, "public");
+        methodName = removePrefix(methodName, "private");
+        methodName = removePrefix(methodName, "protected");
+        // Handle static methods
+        if (methodName.startsWith("static")) {
+            isStaticMethod = true;
+            methodName = removePrefix(methodName, "static");
+        } else
+            isStaticMethod = false;
+        methodName = removePrefix(methodName, "bridge");
+        // Handle compiler magic (Getter, Setter)
+        if (methodName.startsWith("synthetic"))
+            return;
+        // Handle other modifiers
+        methodName = removePrefix(methodName, "final");
+        boolean isVarArgs = false;
+        if (methodName.startsWith("varargs")) {
+            isVarArgs = true;
+            methodName = removePrefix(methodName, "varargs");
+        }
+        boolean isAbstract = false;
+        if (methodName.startsWith("abstract")) {
+            isVarArgs = true;
+            methodName = removePrefix(methodName, "abstract");
+        }
+        methodName = removePrefix(methodName, "constructor");
+        methodName = removePrefix(methodName, "declared-synchronized");
+        if (!isNameValid(methodName)) {
+            System.err.println("Invalid method name '" + methodName + "' in line " + line);
+            return;
+        }
+        curMethod = new SmaliMethod(methodName, isAbstract, isVarArgs);
+        curClass.methods.add(curMethod);
+    }
+
+    private void handleValue(String rest) {
+        if (!waitForEnclosingMethod)
+            return;
+        int start = rest.indexOf("->");
+        int end = rest.indexOf("(");
+        String methodName = rest.substring(start, end);
+        String fName = curClass.finalName;
+        start = fName.lastIndexOf('$');
+        String topName = fName.substring(0, start);
+        // Find real containing class name
+        if (classes.containsKey(topName))
+            topName = classes.get(topName).finalName;
+        curClass.finalName = topName + methodName + fName.substring(start);
+        waitForEnclosingMethod = false;
+    }
+
+    private void handleClass(String line, String rest) {
+        // Skip visibility
+        String className = rest.substring(rest.indexOf(' ') + 1);
+        // Strip modifiers
+        // DO NOT CHANGE ORDER of all of them
+        className = removePrefix(className, "interface");
+        className = removePrefix(className, "abstract");
+        className = removePrefix(className, "final");
+        className = removePrefix(className, "annotation");
+        className = removePrefix(className, "enum");
+        className = smaliTypeToJavaType(className);
+        if (!isNameValid(className)) {
+            System.err.println("Invalid class name '" + className + "' in line " + line);
+            return;
+        }
+        curClass = new SmaliClass(className);
+        classes.put(className, curClass);
     }
 }

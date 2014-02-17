@@ -148,16 +148,6 @@ public class RenameVariablesHandler extends AbstractHandler {
             MessageDialog.openError(shell, "Error", "Could not parse smali classes");
             return;
         }
-        String msg = "This will apply the smali names to the ";
-        if (classOnly)
-            msg += "java file " + cClassName;
-        else
-            msg += "whole project " + pName;
-        msg += "\n\nPlease note that you HAVE to check the changes without a preview and it is better to apply this to the decompiled source before you do any changes yourself.";
-        msg += "\nThis might fail under certain circumstances e.g. with nested classes and certain name combinations.";
-        msg += "\n\nProceed?";
-        if (!MessageDialog.openConfirm(shell, "Apply smali names", msg))
-            return;
         if (classOnly) {
             if (!controller.renameVariablesInFile(cu)) {
                 MessageDialog.openError(shell, "Error", "Initializing the changes failed. Please check output.");
@@ -183,15 +173,24 @@ public class RenameVariablesHandler extends AbstractHandler {
                 e.printStackTrace();
             }
         }
-        return;
-        // if (controller.applyRenamings(shell))
-        // MessageDialog.openInformation(shell, "Success",
-        // "Names were changed. Please have a look at the output in the console for warnings and errors");
-        // else
-        // MessageDialog
-        // .openInformation(
-        // shell,
-        // "Error",
-        // "There were erros changing the names. Some may have been changed. Please have a look at the output in the console for warnings and errors");
+        String msg = "This will apply the smali names to the ";
+        if (classOnly)
+            msg += "java file " + cClassName;
+        else
+            msg += "whole project " + pName;
+        msg += "\n\nPlease note that you HAVE to check the changes without a preview and it is better to apply this to the decompiled source before you do any changes yourself.";
+        msg += "\nThis might fail under certain circumstances e.g. with nested classes and certain name combinations.";
+        msg += "\n\nProceed?";
+        if (!MessageDialog.openConfirm(shell, "Apply smali names", msg))
+            return;
+        if (controller.applyRenamings(shell))
+            MessageDialog.openInformation(shell, "Success",
+                    "Names were changed. Please have a look at the output in the console for warnings and errors");
+        else
+            MessageDialog
+                    .openInformation(
+                            shell,
+                            "Error",
+                            "There were erros changing the names. Some may have been changed. Please have a look at the output in the console for warnings and errors");
     }
 }

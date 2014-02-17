@@ -107,9 +107,9 @@ public class TypeTraceVisitor extends ASTVisitor {
     }
 
     protected String getTypeFromParam(SingleVariableDeclaration v) {
-        String type = v.getType().toString() + getArrayDim(v.getExtraDimensions());
+        String type = v.getType() + getArrayDim(v.getExtraDimensions());
         if (v.isVarargs())
-            type += "...";
+            type = type + "...";
         return type;
     }
 
