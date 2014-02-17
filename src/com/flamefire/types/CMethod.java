@@ -60,4 +60,8 @@ public class CMethod<T extends CVariable> {
     public boolean isConstructor() {
         return name.equals(CONSTRUCTOR);
     }
+
+    public boolean isDefaultConstructor() {
+        return isConstructor() && parameters.size() == 0;
+    }
 }

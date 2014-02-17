@@ -46,4 +46,12 @@ public class CClass<T extends CMethod<U>, U extends CVariable> {
         }
         return result;
     }
+
+    public boolean hasDefaultConstructor() {
+        for (T m : methods) {
+            if (m.isDefaultConstructor())
+                return true;
+        }
+        return false;
+    }
 }

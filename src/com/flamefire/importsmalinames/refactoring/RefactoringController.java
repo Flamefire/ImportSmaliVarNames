@@ -108,7 +108,7 @@ public class RefactoringController {
 
     private void renameVariablesInClass(String sClass, JavaClass curClass) {
         System.out.println("Processing class " + sClass);
-        SmaliClass smClass = smaliClasses.get(sClass);
+        SmaliClass smClass = getSmaliClass(sClass, curClass);
         try {
             if (smClass == null) {
                 System.out.println("Error: Smali class not found");
@@ -120,6 +120,61 @@ public class RefactoringController {
         } catch (JavaModelException e) {
             e.printStackTrace();
         }
+    }
+
+    private SmaliClass getSmaliClass(String sClass, JavaClass curClass) {
+        SmaliClass smClass = smaliClasses.get(sClass);
+        if (smClass == null)
+            return null;
+        int p = sClass.lastIndexOf('$');
+        if (p < 0)
+            return smClass;
+        // Possible anonymous class
+        int i = 0;
+        try {
+            i = Integer.valueOf(sClass.substring(p + 1));
+        } catch (NumberFormatException e) {
+        }
+        if (i == 0)
+            return smClass;
+        SmaliClass first = smClass;
+        String baseName = sClass.substring(0, p + 1);
+        if (!smaliClasses.containsKey(baseName + (i + 1)))
+            return smClass;
+        do {
+            boolean hasDefConst = smClass.hasDefaultConstructor();
+            boolean exactMCt = smClass.methods.size() == curClass.methods.size();
+            if (exactMCt || (hasDefConst && smClass.methods.size() - 1 == curClass.methods.size())) {
+                boolean ok = true;
+                for (JavaMethod m : curClass.methods) {
+                    boolean found = false;
+                    for (SmaliMethod m2 : smClass.methods) {
+                        if (m.name.equals(m2.name) && m.parameters.size() == m2.parameters.size()) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found || (!exactMCt && m.isDefaultConstructor())) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok) {
+                    // We found a class
+                    if (!smClass.equals(first)) {
+                        // Exchange classes
+                        first.name = smClass.name;
+                        smaliClasses.put(first.name, first);
+                        smClass.name = sClass;
+                        smaliClasses.put(smClass.name, smClass);
+                    }
+                    return smClass;
+                }
+            }
+            i++;
+            smClass = smaliClasses.get(baseName + i);
+        } while (smClass != null);
+        return first;
     }
 
     private void renameVariablesInMethod(JavaMethod method, SmaliClass smClass) throws JavaModelException {
