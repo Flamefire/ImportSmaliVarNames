@@ -38,6 +38,8 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +61,9 @@ public class RefactoringController {
 
     public boolean init(File smaliFolder) {
         List<File> smaliFiles = FileUtil.getFilesRecursive(smaliFolder, new SuffixFilter(TypeFilter.FILE, "smali"));
+        // Do this in order to keep anonymous classes the same same as they were
+        // before
+        Collections.sort(smaliFiles);
         SmaliParser parser = new SmaliParser();
         for (File f : smaliFiles)
             if (!parser.parseFile(f))
@@ -162,6 +167,28 @@ public class RefactoringController {
                 if (ok) {
                     // We found a class
                     if (!smClass.equals(first)) {
+                        List<SmaliClass> renameNew = new ArrayList<SmaliClass>();
+                        List<SmaliClass> renamefirst = new ArrayList<SmaliClass>();
+                        for (String n : smaliClasses.keySet()) {
+                            if (n.startsWith(smClass.name + "->"))
+                                renameNew.add(smaliClasses.get(n));
+                            if (n.startsWith(first.name + "->"))
+                                renamefirst.add(smaliClasses.get(n));
+                        }
+                        // Do this separate to avoid collisions
+                        for (SmaliClass c : renameNew)
+                            smaliClasses.remove(c.name);
+                        for (SmaliClass c : renamefirst)
+                            smaliClasses.remove(c.name);
+                        for (SmaliClass c : renameNew) {
+                            c.name = first.name + c.name.substring(smClass.name.length());
+                            smaliClasses.put(c.name, c);
+                        }
+                        for (SmaliClass c : renamefirst) {
+                            c.name = smClass.name + c.name.substring(first.name.length());
+                            smaliClasses.put(c.name, c);
+                        }
+
                         // Exchange classes
                         first.name = smClass.name;
                         smaliClasses.put(first.name, first);

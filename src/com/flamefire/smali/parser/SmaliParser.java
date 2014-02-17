@@ -32,6 +32,7 @@ import java.util.Map;
 
 public class SmaliParser {
     private final Map<String, SmaliClass> classes = new HashMap<String, SmaliClass>();
+    private final Map<String, Integer> anonClassCt = new HashMap<String, Integer>();
     private SmaliClass curClass;
     private SmaliMethod curMethod;
     private boolean waitForEnclosingMethod;
@@ -116,7 +117,6 @@ public class SmaliParser {
         if (type.startsWith("L"))
             type = type.substring(1);
         type = type.replace('/', '.');
-        type = Util.removePrefix(type, "java.lang.");
         return type;
     }
 
@@ -250,6 +250,7 @@ public class SmaliParser {
     private void handleValue(String rest) {
         if (!waitForEnclosingMethod)
             return;
+        rest = rest.substring(2);
         int start = rest.indexOf("->");
         int end = rest.indexOf("(");
         String methodName = rest.substring(start, end);
@@ -259,7 +260,13 @@ public class SmaliParser {
         // Find real containing class name
         if (classes.containsKey(topName))
             topName = classes.get(topName).finalName;
-        curClass.finalName = topName + methodName + fName.substring(start);
+        Integer ct = anonClassCt.get(rest);
+        if (ct == null)
+            ct = 1;
+        else
+            ct++;
+        anonClassCt.put(rest, ct);
+        curClass.finalName = topName + methodName + "$" + ct;
         waitForEnclosingMethod = false;
     }
 
