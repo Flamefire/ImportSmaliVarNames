@@ -88,6 +88,10 @@ public class TypeTraceVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(AnonymousClassDeclaration node) {
+        // Anonymous classes in classes are not supported and are most likely
+        // wrong enums
+        if (curParent.lastIndexOf('.') >= curParent.lastIndexOf("->"))
+            return false;
         curAnonCt++;
         newClassFound(node, String.valueOf(curAnonCt));
         return true;
@@ -95,6 +99,10 @@ public class TypeTraceVisitor extends ASTVisitor {
 
     @Override
     public void endVisit(AnonymousClassDeclaration node) {
+        // Anonymous classes in classes are not supported and are most likely
+        // wrong enums
+        if (curParent.lastIndexOf('.') >= curParent.lastIndexOf("->"))
+            return;
         classEnd();
     }
 

@@ -116,7 +116,7 @@ public class RefactoringController {
         SmaliClass smClass = getSmaliClass(sClass, curClass);
         try {
             if (smClass == null) {
-                System.out.println("Error: Smali class not found");
+                System.err.println("Error: Smali class " + sClass + " not found");
                 return;
             }
             for (JavaMethod method : curClass.methods) {
@@ -228,11 +228,11 @@ public class RefactoringController {
         }
         if (methods.size() == 0) {
             if (!method.isAbstract)
-                System.out.println("Error: Smali method not found");
+                System.err.println("Error: Smali method " + method.name + " not found");
             return;
         }
         if (methods.size() > 1) {
-            System.out.println("Error: To many smali methods match");
+            System.err.println("Error: To many smali methods match " + method.name);
             return;
         }
         curRenamings.put(method, new HashMap<String, String>());
