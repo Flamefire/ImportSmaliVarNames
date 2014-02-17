@@ -46,6 +46,12 @@ import java.util.Map;
 
 public class RefactoringHelper {
     private static IProgressMonitor NULL_MON = new NullProgressMonitor();
+    private static char[] SigTypesFrom = {
+            'B', 'I', 'L', 'F', 'D'
+    };
+    private static String[] SigTypesTo = {
+            "boolean", "int", "long", "float", "double"
+    };
 
     // Based on Code of
     // http://stackoverflow.com/questions/14408614/refactor-parameter-names-programmatically
@@ -91,18 +97,19 @@ public class RefactoringHelper {
         return type;
     }
 
+    private static String replaceSigType(String type, char from, String to) {
+        // Do not forget we may have an array type
+        if (type.equals(from) || type.startsWith(from + "...") || type.startsWith(from + "[]"))
+            type = to + type.substring(1);
+        return type;
+    }
+
     public static String convertSignatureToType(String type) {
         if (type.startsWith("."))
             type = type.substring(1) + "...";
-        // Do not forget we may have an array type
-        if (type.startsWith("I"))
-            return "int" + type.substring(1);
-        if (type.startsWith("J"))
-            return "long" + type.substring(1);
-        if (type.startsWith("D"))
-            return "double" + type.substring(1);
-        if (type.startsWith("B"))
-            return "boolean" + type.substring(1);
+        for (int i = 0; i < SigTypesFrom.length; i++) {
+            type = replaceSigType(type, SigTypesFrom[i], SigTypesTo[i]);
+        }
         type = type.replace("$", ".");
         return standardizeJavaType(type);
     }

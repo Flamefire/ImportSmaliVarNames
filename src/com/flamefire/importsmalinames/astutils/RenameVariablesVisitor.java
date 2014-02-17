@@ -23,11 +23,14 @@ import com.flamefire.importsmalinames.types.JavaVariable;
 
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.LabeledStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
@@ -184,7 +187,20 @@ public class RenameVariablesVisitor extends TypeTraceVisitor {
             return false;
         // Only replace variables
         IBinding binding = node.resolveBinding();
-        if (binding.getKind() != IBinding.VARIABLE)
+        if (binding == null) {
+            if ((node.getParent() instanceof LabeledStatement)
+                    && ((LabeledStatement) node.getParent()).getLabel().equals(node))
+                return false;
+            if ((node.getParent() instanceof BreakStatement)
+                    && ((BreakStatement) node.getParent()).getLabel().equals(node))
+                return false;
+            if (node.getParent() instanceof QualifiedName)
+                return false;
+            // This may happen
+            System.err.println("Detected SimpleName without binding: " + node + "; Parent:" + node.getParent()
+                    + "\nThis may happen if there are compile errors");
+            // return false;
+        } else if (binding.getKind() != IBinding.VARIABLE)
             return false;
         // Check if we need to add a "this"
         // Do this if current node is a field and we may replace a variable with
@@ -192,7 +208,7 @@ public class RenameVariablesVisitor extends TypeTraceVisitor {
         AST ast = node.getAST();
         IVariableBinding vBinding = (IVariableBinding) binding;
         // Check for field acceses
-        if (vBinding.isField()) {
+        if (vBinding != null && vBinding.isField()) {
             if (renaming.containsValue(node.toString()) && !(node.getParent() instanceof FieldAccess)) {
                 FieldAccess fa = ast.newFieldAccess();
                 fa.setExpression(ast.newThisExpression());

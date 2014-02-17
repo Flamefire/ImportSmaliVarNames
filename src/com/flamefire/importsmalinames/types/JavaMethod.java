@@ -21,7 +21,7 @@ import com.flamefire.types.CMethod;
 
 public class JavaMethod extends CMethod<JavaVariable> {
 
-    public JavaMethod(String name) {
-        super(name);
+    public JavaMethod(String name, boolean isAbstract) {
+        super(name, isAbstract);
     }
 }

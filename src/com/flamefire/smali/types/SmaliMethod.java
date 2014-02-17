@@ -24,8 +24,8 @@ import java.util.List;
 public class SmaliMethod extends CMethod<SmaliVariable> {
     public final boolean isVarArgs;
 
-    public SmaliMethod(String name, boolean isVarArgs) {
-        super(name);
+    public SmaliMethod(String name, boolean isAbstract, boolean isVarArgs) {
+        super(name, isAbstract);
         this.isVarArgs = isVarArgs;
     }
 

@@ -200,14 +200,18 @@ public class SmaliParser {
                 isVarArgs = true;
                 methodName = removePrefix(methodName, "varargs");
             }
-            methodName = removePrefix(methodName, "abstract");
+            boolean isAbstract = false;
+            if (methodName.startsWith("abstract")) {
+                isVarArgs = true;
+                methodName = removePrefix(methodName, "abstract");
+            }
             methodName = removePrefix(methodName, "constructor");
             methodName = removePrefix(methodName, "declared-synchronized");
             if (!isNameValid(methodName)) {
                 System.err.println("Invalid method name '" + methodName + "' in line " + line);
                 return;
             }
-            curMethod = new SmaliMethod(methodName, isVarArgs);
+            curMethod = new SmaliMethod(methodName, isAbstract, isVarArgs);
             curClass.methods.add(curMethod);
         } else if (id.equals(".end")) {
             if (rest.equals("method"))

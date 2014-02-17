@@ -25,9 +25,11 @@ public class CMethod<T extends CVariable> {
     public final List<T> parameters = new ArrayList<T>();
     public final List<T> variables = new ArrayList<T>();
     public final String name;
+    public final boolean isAbstract;
 
-    public CMethod(String name) {
+    public CMethod(String name, boolean isAbstract) {
         this.name = name;
+        this.isAbstract = isAbstract;
     }
 
     @Override

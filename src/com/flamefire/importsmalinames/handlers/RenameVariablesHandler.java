@@ -160,7 +160,7 @@ public class RenameVariablesHandler extends AbstractHandler {
             return;
         if (classOnly) {
             if (!controller.renameVariablesInFile(cu)) {
-                MessageDialog.openError(shell, "Error", "Applying the changes failed. Please check output.");
+                MessageDialog.openError(shell, "Error", "Initializing the changes failed. Please check output.");
                 return;
             }
         } else {
@@ -172,7 +172,7 @@ public class RenameVariablesHandler extends AbstractHandler {
                     for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
                         if (!controller.renameVariablesInFile(unit)) {
                             if (!MessageDialog.openConfirm(shell, "Error in "
-                                    + unit.getCorrespondingResource().getName(), "Applying the changes to "
+                                    + unit.getCorrespondingResource().getName(), "Initializing the changes to "
                                     + unit.getCorrespondingResource().getName()
                                     + " failed. Please check output.\n\nContinue?"))
                                 return;
@@ -183,8 +183,15 @@ public class RenameVariablesHandler extends AbstractHandler {
                 e.printStackTrace();
             }
         }
-
-        MessageDialog.openInformation(shell, "Success",
-                "Names were changed. Please have a look at the output in the console for warnings and errors");
+        return;
+        // if (controller.applyRenamings(shell))
+        // MessageDialog.openInformation(shell, "Success",
+        // "Names were changed. Please have a look at the output in the console for warnings and errors");
+        // else
+        // MessageDialog
+        // .openInformation(
+        // shell,
+        // "Error",
+        // "There were erros changing the names. Some may have been changed. Please have a look at the output in the console for warnings and errors");
     }
 }

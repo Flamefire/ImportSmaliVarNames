@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -128,7 +129,7 @@ public class TypeTraceVisitor extends ASTVisitor {
         if (!curParent.equals(""))
             curParent += "->";
         curParent += name;
-        JavaMethod jMethod = new JavaMethod(name);
+        JavaMethod jMethod = new JavaMethod(name, Modifier.isAbstract(node.getModifiers()));
         @SuppressWarnings("unchecked")
         List<SingleVariableDeclaration> params = node.parameters();
         for (SingleVariableDeclaration p : params) {

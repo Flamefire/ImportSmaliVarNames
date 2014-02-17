@@ -20,6 +20,7 @@ package com.flamefire.importsmalinames.astutils;
 import com.flamefire.importsmalinames.types.JavaClass;
 import com.flamefire.importsmalinames.types.JavaVariable;
 
+import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
@@ -35,6 +36,8 @@ public class JavaTypesGatherVisitor extends TypeTraceVisitor {
 
     @Override
     public boolean visit(VariableDeclarationStatement node) {
+        if (curMethod == null)
+            return true;
         String type = node.getType().toString();
         for (@SuppressWarnings("unchecked")
         Iterator<VariableDeclarationFragment> iter = node.fragments().iterator(); iter.hasNext();) {
@@ -47,6 +50,11 @@ public class JavaTypesGatherVisitor extends TypeTraceVisitor {
                     + getArrayDim(var.getExtraDimensions())));
         }
         return true;
+    }
+
+    @Override
+    public boolean visit(Initializer node) {
+        return false;
     }
 
     @Override

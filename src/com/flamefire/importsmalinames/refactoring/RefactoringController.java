@@ -34,6 +34,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Shell;
 
 import java.io.File;
 import java.util.HashMap;
@@ -42,7 +44,18 @@ import java.util.Map;
 
 public class RefactoringController {
     private Map<String, SmaliClass> smaliClasses = null;
-    private final Map<JavaMethod, Map<String, String>> renamings = new HashMap<JavaMethod, Map<String, String>>();
+    private Map<JavaMethod, Map<String, String>> curRenamings;
+    private final Map<ICompilationUnit, RenamingEntry> renamings = new HashMap<ICompilationUnit, RenamingEntry>();
+
+    private class RenamingEntry {
+        public final Map<JavaMethod, Map<String, String>> renamings;
+        public final Map<String, JavaClass> classes;
+
+        public RenamingEntry(Map<JavaMethod, Map<String, String>> renamings, Map<String, JavaClass> classes) {
+            this.renamings = renamings;
+            this.classes = classes;
+        }
+    }
 
     public boolean init(File smaliFolder) {
         List<File> smaliFiles = FileUtil.getFilesRecursive(smaliFolder, new SuffixFilter(TypeFilter.FILE, "smali"));
@@ -51,20 +64,46 @@ public class RefactoringController {
             if (!parser.parseFile(f))
                 return false;
         smaliClasses = parser.getResult();
+        renamings.clear();
         return true;
     }
 
     public boolean renameVariablesInFile(ICompilationUnit cu) {
-        renamings.clear();
+        if (renamings.containsKey(cu))
+            return false;
+        curRenamings = new HashMap<JavaMethod, Map<String, String>>();
         Map<String, JavaClass> classes = RefactoringHelper.getTypesInCU(cu);
         for (String sClass : classes.keySet()) {
             renameVariablesInClass(sClass, classes.get(sClass));
         }
-        CompilationUnit unit = Util.createCU(cu);
-        ASTRewrite astRewrite = ASTRewrite.create(unit.getAST());
-        RenameVariablesVisitor v = new RenameVariablesVisitor(classes, renamings, astRewrite);
-        unit.accept(v);
-        return RefactoringHelper.rewriteAST(cu, astRewrite);
+        RenamingEntry entry = new RenamingEntry(curRenamings, classes);
+        renamings.put(cu, entry);
+        return true;
+    }
+
+    public boolean applyRenamings(Shell shell) {
+        boolean res = true;
+        try {
+            for (ICompilationUnit cu : renamings.keySet()) {
+                RenamingEntry entry = renamings.get(cu);
+                CompilationUnit unit = Util.createCU(cu);
+                ASTRewrite astRewrite = ASTRewrite.create(unit.getAST());
+                RenameVariablesVisitor v = new RenameVariablesVisitor(entry.classes, entry.renamings, astRewrite);
+                unit.accept(v);
+                if (!RefactoringHelper.rewriteAST(cu, astRewrite)) {
+                    if (renamings.size() == 1
+                            || !MessageDialog.openConfirm(shell, "Error in " + cu.getCorrespondingResource().getName(),
+                                    "Applying the changes to " + cu.getCorrespondingResource().getName()
+                                            + " failed. Please check output.\n\nContinue?"))
+                        return false;
+                    else
+                        res = false;
+                }
+            }
+        } catch (JavaModelException e) {
+            e.printStackTrace();
+        }
+        return res;
     }
 
     private void renameVariablesInClass(String sClass, JavaClass curClass) {
@@ -106,20 +145,21 @@ public class RefactoringController {
             }
         }
         if (methods.size() == 0) {
-            System.out.println("Error: Smali method not found");
+            if (!method.isAbstract)
+                System.out.println("Error: Smali method not found");
             return;
         }
         if (methods.size() > 1) {
             System.out.println("Error: To many smali methods match");
             return;
         }
-        renamings.put(method, new HashMap<String, String>());
+        curRenamings.put(method, new HashMap<String, String>());
         renameParameters(method, methods.get(0));
         renameLocalVariables(method, methods.get(0));
     }
 
     private void renameParameters(JavaMethod method, SmaliMethod smMethod) {
-        Map<String, String> rename = renamings.get(method);
+        Map<String, String> rename = curRenamings.get(method);
         List<JavaVariable> p = method.parameters;
         for (int j = 0; j < p.size(); j++) {
             addRenameVar(p.get(j), smMethod.parameters.get(j).name, rename);
@@ -140,7 +180,7 @@ public class RefactoringController {
     }
 
     private void renameLocalVariables(JavaMethod method, SmaliMethod smMethod) {
-        Map<String, String> rename = renamings.get(method);
+        Map<String, String> rename = curRenamings.get(method);
         for (JavaVariable v : method.variables) {
             String newName = matchLocalVar(v, smMethod);
             if (newName != null) {
