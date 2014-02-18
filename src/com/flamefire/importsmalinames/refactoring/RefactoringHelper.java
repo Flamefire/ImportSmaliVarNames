@@ -26,22 +26,24 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
 import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringContribution;
 import org.eclipse.ltk.core.refactoring.RefactoringCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.TextEdit;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Map;
 
 public class RefactoringHelper {
@@ -137,10 +139,20 @@ public class RefactoringHelper {
     }
 
     public static Map<String, JavaClass> getTypesInCU(ICompilationUnit icu) {
-        CompilationUnit cu = Util.createCU(icu);
+        CompilationUnit cu = Util.createCU(icu, false);
         JavaTypesGatherVisitor lv = new JavaTypesGatherVisitor();
         cu.accept(lv);
         return lv.classes;
+    }
+
+    public static void write(String content, File file) throws IOException {
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+        PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file)));
+        out.write(content);
+
+        out.close();
     }
 
     /**
@@ -155,13 +167,10 @@ public class RefactoringHelper {
             TextEdit edits = astRewrite.rewriteAST(doc, null);
             edits.apply(doc);
             cu.getBuffer().setContents(doc.get());
-        } catch (JavaModelException e) {
-            e.printStackTrace();
-            return false;
-        } catch (MalformedTreeException e) {
-            e.printStackTrace();
-            return false;
-        } catch (BadLocationException e) {
+            File file = cu.getResource().getLocation().toFile();
+            write(doc.get(), file);
+            cu.getResource().refreshLocal(0, null);
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }

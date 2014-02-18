@@ -91,7 +91,8 @@ public class RefactoringController {
         try {
             for (ICompilationUnit cu : renamings.keySet()) {
                 RenamingEntry entry = renamings.get(cu);
-                CompilationUnit unit = Util.createCU(cu);
+                CompilationUnit unit = Util.createCU(cu, true);
+                unit.recordModifications();
                 ASTRewrite astRewrite = ASTRewrite.create(unit.getAST());
                 RenameVariablesVisitor v = new RenameVariablesVisitor(entry.classes, entry.renamings, astRewrite);
                 unit.accept(v);

@@ -24,16 +24,14 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jface.text.Document;
-import org.eclipse.text.edits.TextEdit;
 
 public abstract class Util {
-    public static CompilationUnit createCU(ICompilationUnit cu) {
+    public static CompilationUnit createCU(ICompilationUnit cu, boolean resolveBindings) {
         ASTParser parser = ASTParser.newParser(AST.JLS4);
         parser.setProject(cu.getJavaProject());
         parser.setSource(cu);
-        parser.setResolveBindings(true);
+        parser.setResolveBindings(resolveBindings);
+        parser.setBindingsRecovery(true);
         CompilationUnit unit = (CompilationUnit) parser.createAST(null);
         return unit;
     }
@@ -50,29 +48,6 @@ public abstract class Util {
         try {
             res.setPersistentProperty(qn, value);
         } catch (CoreException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void ASTExample(ICompilationUnit cu) {
-        CompilationUnit cuNew = createCU(cu);
-        ASTRewrite astRew = ASTRewrite.create(cuNew.getAST());
-        cuNew.recordModifications();
-        try {
-            Document document = new Document(cu.getSource());
-            // Map options = cu.getJavaProject().getOptions(true);
-            TextEdit cuEdit = astRew.rewriteAST(document, null);
-            cuEdit.apply(document);
-            String newSource = document.get();
-            cu = (ICompilationUnit) cuNew.getJavaElement();
-            cu.getBuffer().setContents(newSource);
-            /*
-             * String name = cu.getElementName(); IFile file = (IFile)
-             * cu.getResource(); TextFileChange change = new
-             * TextFileChange(name, file); change.setTextType("java");
-             * change.setEdit(edit); change.perform(new NullProgressMonitor());
-             */
-        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -209,7 +209,9 @@ public class RenameVariablesVisitor extends TypeTraceVisitor {
         IVariableBinding vBinding = (IVariableBinding) binding;
         // Check for field acceses
         if (vBinding != null && vBinding.isField()) {
-            if (renaming.containsValue(node.toString()) && !(node.getParent() instanceof FieldAccess)) {
+            // Add this if necessary
+            if (renaming.containsValue(node.toString()) && !(node.getParent() instanceof FieldAccess)
+                    && !(node.getParent() instanceof QualifiedName)) {
                 FieldAccess fa = ast.newFieldAccess();
                 fa.setExpression(ast.newThisExpression());
                 fa.setName(ast.newSimpleName(node.toString()));
