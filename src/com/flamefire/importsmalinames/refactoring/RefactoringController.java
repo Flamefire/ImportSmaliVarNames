@@ -249,22 +249,21 @@ public class RefactoringController {
         }
     }
 
-    private String matchLocalVar(JavaVariable locVar, SmaliMethod smMethod) {
-        String res = null;
+    private String matchLocalVar(JavaVariable locVar, SmaliMethod smMethod, Map<String, String> rename) {
         for (SmaliVariable v : smMethod.variables) {
             if (RefactoringHelper.typeIsEqual(locVar.getType(),
                     RefactoringHelper.convertSignatureToType(v.getTypeSignature()))) {
-                if (!curRenamings.containsValue(v.name))
-                    res = v.name;
+                if (!rename.containsValue(v.name))
+                    return v.name;
             }
         }
-        return res;
+        return null;
     }
 
     private void renameLocalVariables(JavaMethod method, SmaliMethod smMethod) {
         Map<String, String> rename = curRenamings.get(method);
         for (JavaVariable v : method.variables) {
-            String newName = matchLocalVar(v, smMethod);
+            String newName = matchLocalVar(v, smMethod, rename);
             if (newName != null) {
                 addRenameVar(v, newName, rename);
             }
