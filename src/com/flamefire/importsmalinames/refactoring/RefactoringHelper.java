@@ -175,27 +175,6 @@ public class RefactoringHelper {
             return false;
         }
         return true;
-        // try {
-        // MultiTextEdit edit = new MultiTextEdit();
-        // TextEdit astEdit = astRewrite.rewriteAST();
-        //
-        // if (!isEmptyEdit(astEdit))
-        // edit.addChild(astEdit);
-        // if (isEmptyEdit(edit))
-        // return false;
-        //
-        // TextFileChange change = new TextFileChange(unit.getElementName(),
-        // (IFile) unit.getResource());
-        // change.setTextType("java");
-        // change.setEdit(edit);
-        // } catch (JavaModelException e) {
-        // e.printStackTrace();
-        // return false;
-        // } catch (IllegalArgumentException e) {
-        // e.printStackTrace();
-        // return false;
-        // }
-        // return true;
     }
 
 }

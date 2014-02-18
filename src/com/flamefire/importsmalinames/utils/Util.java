@@ -31,6 +31,7 @@ public abstract class Util {
         parser.setProject(cu.getJavaProject());
         parser.setSource(cu);
         parser.setResolveBindings(resolveBindings);
+        parser.setStatementsRecovery(true);
         parser.setBindingsRecovery(true);
         CompilationUnit unit = (CompilationUnit) parser.createAST(null);
         return unit;
