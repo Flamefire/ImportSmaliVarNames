@@ -23,10 +23,9 @@ import com.flamefire.importsmalinames.types.JavaVariable;
 import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 
 public class JavaTypesGatherVisitor extends TypeTraceVisitor {
 
@@ -34,14 +33,10 @@ public class JavaTypesGatherVisitor extends TypeTraceVisitor {
         super(new HashMap<String, JavaClass>());
     }
 
-    @Override
-    public boolean visit(VariableDeclarationStatement node) {
+    protected void handleVarDecl(String type, List<VariableDeclarationFragment> fragments) {
         if (curMethod == null)
-            return true;
-        String type = node.getType().toString();
-        for (@SuppressWarnings("unchecked")
-        Iterator<VariableDeclarationFragment> iter = node.fragments().iterator(); iter.hasNext();) {
-            VariableDeclarationFragment var = iter.next();
+            return;
+        for (VariableDeclarationFragment var : fragments) {
             // VariableDeclarationFragment: is the plain variable declaration
             // part.
             // Example: "int x=0, y=0;" contains two
@@ -49,7 +44,6 @@ public class JavaTypesGatherVisitor extends TypeTraceVisitor {
             curMethod.variables.add(new JavaVariable(var.getName().toString(), type
                     + getArrayDim(var.getExtraDimensions())));
         }
-        return true;
     }
 
     @Override

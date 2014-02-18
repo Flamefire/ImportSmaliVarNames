@@ -18,6 +18,7 @@
 package com.flamefire.importsmalinames.refactoring;
 
 import com.flamefire.importsmalinames.astutils.JavaTypesGatherVisitor;
+import com.flamefire.importsmalinames.astutils.TypeTraceVisitor;
 import com.flamefire.importsmalinames.types.JavaClass;
 import com.flamefire.importsmalinames.utils.Util;
 
@@ -140,7 +141,7 @@ public class RefactoringHelper {
 
     public static Map<String, JavaClass> getTypesInCU(ICompilationUnit icu) {
         CompilationUnit cu = Util.createCU(icu, false);
-        JavaTypesGatherVisitor lv = new JavaTypesGatherVisitor();
+        TypeTraceVisitor lv = new JavaTypesGatherVisitor();
         cu.accept(lv);
         return lv.classes;
     }

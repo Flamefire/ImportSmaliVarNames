@@ -28,17 +28,18 @@ import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.LabeledStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -98,6 +99,8 @@ public class RenameVariablesVisitor extends TypeTraceVisitor {
         int pCount = jMethod.parameters.size();
         for (JavaMethod m : curClass.methods) {
             if (m.parameters.size() != pCount)
+                continue;
+            if (!m.name.equals(jMethod.name))
                 continue;
             boolean match = true;
             for (int i = 0; i < pCount; i++) {
@@ -170,14 +173,18 @@ public class RenameVariablesVisitor extends TypeTraceVisitor {
     }
 
     @Override
-    public boolean visit(VariableDeclarationStatement node) {
-        for (@SuppressWarnings("unchecked")
-        Iterator<VariableDeclarationFragment> iter = node.fragments().iterator(); iter.hasNext();) {
-            VariableDeclarationFragment var = iter.next();
+    public boolean visit(Initializer node) {
+        return false;
+    }
+
+    @Override
+    protected void handleVarDecl(String type, List<VariableDeclarationFragment> fragments) {
+        if (curMethod == null)
+            return;
+        for (VariableDeclarationFragment var : fragments) {
             String name = var.getName().toString();
             renaming.put(name, getNewNameForDecl(name));
         }
-        return true;
     }
 
     @Override

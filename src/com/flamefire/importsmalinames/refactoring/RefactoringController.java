@@ -254,9 +254,8 @@ public class RefactoringController {
         for (SmaliVariable v : smMethod.variables) {
             if (RefactoringHelper.typeIsEqual(locVar.getType(),
                     RefactoringHelper.convertSignatureToType(v.getTypeSignature()))) {
-                if (res != null)
-                    return null;
-                res = v.name;
+                if (!curRenamings.containsValue(v.name))
+                    res = v.name;
             }
         }
         return res;

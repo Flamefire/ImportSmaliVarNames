@@ -15,12 +15,15 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-public class TypeTraceVisitor extends ASTVisitor {
+public abstract class TypeTraceVisitor extends ASTVisitor {
     private final Stack<String> parentStack = new Stack<String>();
     private final Stack<JavaClass> classStack = new Stack<JavaClass>();
     private final Stack<JavaMethod> methodStack = new Stack<JavaMethod>();
@@ -153,5 +156,21 @@ public class TypeTraceVisitor extends ASTVisitor {
         curParent = parentStack.pop();
         curMethod = methodStack.pop();
         curAnonCt = anonCtStack.pop();
+    }
+
+    protected abstract void handleVarDecl(String type, List<VariableDeclarationFragment> fragments);
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean visit(VariableDeclarationStatement node) {
+        handleVarDecl(node.getType().toString(), node.fragments());
+        return true;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean visit(VariableDeclarationExpression node) {
+        handleVarDecl(node.getType().toString(), node.fragments());
+        return true;
     }
 }
